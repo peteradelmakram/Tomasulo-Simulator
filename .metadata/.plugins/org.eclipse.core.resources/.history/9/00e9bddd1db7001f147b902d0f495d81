@@ -190,7 +190,7 @@ public class TomasuloSimulator {
     	String source = instruction.getSource1();
     	String destination = instruction.getDestination();
     	
-    	// Check if source is numeric or not. If numeric, then direct.
+    	
     	if(source.matches("\\d+")) {
     		isDirectMapped = true;
     	}else {
