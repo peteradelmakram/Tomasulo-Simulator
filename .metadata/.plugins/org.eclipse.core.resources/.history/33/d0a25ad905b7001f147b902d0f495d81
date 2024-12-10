@@ -1,0 +1,36 @@
+package ReservationStations;
+
+import Instruction.Instruction;
+
+public class ReservationStationManager {
+    public AdditionReservationStation addSubtractRS;
+    public MultiplicationReservationStation multiplyDivideRS;
+
+    public ReservationStationManager(int addSubtractSize, int multiplyDivideSize) {
+        this.addSubtractRS = new AdditionReservationStation(addSubtractSize);
+        this.multiplyDivideRS = new MultiplicationReservationStation(multiplyDivideSize);
+    }
+
+    // Dispatch instructions to the appropriate reservation station
+    public boolean dispatchInstruction(Instruction instruction) {
+        boolean dispatched = false;
+        if (instruction.getOperation().equals("ADD.D") || instruction.getOperation().equals("SUB.D") ||
+                instruction.getOperation().equals("DADDI") || instruction.getOperation().equals("DSUBI") ||
+                instruction.getOperation().equals("ADD.S") || instruction.getOperation().equals("SUB.S")) {
+            dispatched = addSubtractRS.dispatchInstruction(instruction, currentAddTag);
+            if (dispatched) currentAddTag++;
+        } else if (instruction.getOperation().equals("MUL.D") || instruction.getOperation().equals("DIV.D") ||
+                instruction.getOperation().equals("MUL.S") || instruction.getOperation().equals("DIV.S")) {
+            dispatched = multiplyDivideRS.dispatchInstruction(instruction, currentMulTag);
+            if (dispatched) currentMulTag++;
+        }
+        return dispatched;
+    }
+
+
+    // Check the reservation stations for ready instructions and execute them
+    public void executeInstructions() {
+        addSubtractRS.checkExecution();
+        multiplyDivideRS.checkExecution();
+    }
+}

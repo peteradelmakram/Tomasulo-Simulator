@@ -1,0 +1,80 @@
+package InstructionParser;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Queue;
+
+
+public class InstructionParser {
+    private Queue<Instruction> instructionQueue = new LinkedList<>();
+
+    // Method to parse a file and load instructions into the queue
+    public void parseInstructions(String filePath) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                parseLine(line.trim());
+            }
+        }
+    }
+
+    // Method to parse a line and create the corresponding Instruction
+    private void parseLine(String line) {
+        if (line.isEmpty() || line.startsWith("#")) {
+            // Skip empty lines or comments
+            return;
+        }
+
+        String[] parts = line.split(" ");
+        String operation = parts[0];
+
+        // Handle different types of instructions
+        if (operation.equals("L.D") || operation.equals("S.D")) {
+            // Load/Store instruction (destination, source)
+            String destination = parts[1];
+            String source1 = parts[2];
+            Instruction instruction = new Instruction(operation, destination, source1);
+            instructionQueue.offer(instruction);
+        } else if (operation.equals("MUL.D") || operation.equals("ADD.D") || operation.equals("SUB.D") || operation.equals("DIV.D")) {
+            // Arithmetic instructions (destination, source1, source2)
+            String destination = parts[1];
+            String source1 = parts[2];
+            String source2 = parts[3];
+            Instruction instruction = new Instruction(operation, destination, source1, source2);
+            instructionQueue.offer(instruction);
+        } else if (operation.equals("DADDI") || operation.equals("DSUBI")) {
+            // DADDI/DSUBI (destination, source1, immediate)
+            String destination = parts[1];
+            String source1 = parts[2];
+            String source2 = parts[3];
+            Instruction instruction = new Instruction(operation, destination, source1, source2);
+            instructionQueue.offer(instruction);
+        } else if (operation.equals("BNE")) {
+            // Branch (source1, source2, label)
+            String source1 = parts[1];
+            String source2 = parts[2];
+            String label = parts[3];
+            Instruction instruction = new Instruction(operation, source1, source2, label);
+            instructionQueue.offer(instruction);
+        }
+    }
+
+    // Getter for the instruction queue
+    public Queue<Instruction> getInstructionQueue() {
+        return instructionQueue;
+    }
+
+    // Main method for testing
+    public static void main(String[] args) {
+        InstructionParser parser = new InstructionParser();
+        try {
+            parser.parseInstructions("instructions.txt");  // Path to the instruction file
+            for (Instruction instruction : parser.getInstructionQueue()) {
+                System.out.println(instruction);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}

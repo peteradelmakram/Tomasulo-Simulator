@@ -1,0 +1,39 @@
+package Buffer;
+
+public class LoadBufferEntry {
+    private String tag;   // Unique identifier for the entry
+    private int address; // Address of the load instruction
+    private boolean busy;  // Whether the load buffer entry is occupied
+    
+    // Constructor
+    public LoadBufferEntry(String tag, int address) {
+        this.tag = tag;
+        this.address = address;
+        this.busy = false;
+    }
+
+    // Setters and Getters
+    public void setBusy(boolean busy) {
+        this.busy = busy;
+    }
+
+    public boolean isBusy() {
+        return busy;
+    }
+
+    public void setAddress(int address) {
+        this.address = address;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void clear() {
+        this.busy = false;
+    }
+}

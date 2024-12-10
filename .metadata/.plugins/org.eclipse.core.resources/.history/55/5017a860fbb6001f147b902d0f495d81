@@ -1,0 +1,47 @@
+package InstructionMemory;
+
+import Instruction.Instruction;
+
+public class InstructionMemory {
+    private Instruction[] instructionMemory;
+    private static final int MEMORY_SIZE = 1024; // Define the size of the instruction memory (1024 instructions as an example)
+    private static final int INSTRUCTION_SIZE = 4; // Assuming each instruction is 4 bytes (1 instruction = 4 bytes)
+
+    public InstructionMemory() {
+        instructionMemory = new Instruction[MEMORY_SIZE];
+    }
+
+    // Method to load an instruction at a specific index (representing memory address)
+    public void loadInstruction(int index, Instruction instruction) {
+        if (index >= 0 && index < MEMORY_SIZE) {
+            instructionMemory[index] = instruction;
+        } else {
+            System.out.println("Error: Instruction index out of bounds!");
+        }
+    }
+
+    // Method to fetch an instruction by index (address)
+    public Instruction fetchInstruction(int index) {
+        if (index >= 0 && index < MEMORY_SIZE) {
+            return instructionMemory[index];
+        } else {
+            System.out.println("Error: Instruction index out of bounds!");
+            return null;
+        }
+    }
+
+    // Method to check if an instruction exists at a given index (address)
+    public boolean hasInstructionAt(int index) {
+        return index >= 0 && index < MEMORY_SIZE && instructionMemory[index] != null;
+    }
+
+    // Getter for the instruction memory
+    public Instruction[] getInstructionMemory() {
+        return instructionMemory;
+    }
+
+    // Method to get the next instruction index (for sequential access)
+    public int getNextIndex(int currentIndex) {
+        return currentIndex + 1; // Assuming sequential instructions
+    }
+}

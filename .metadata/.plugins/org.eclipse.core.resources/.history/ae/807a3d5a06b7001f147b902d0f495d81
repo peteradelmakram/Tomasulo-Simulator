@@ -1,0 +1,107 @@
+import Instruction.Instruction;
+import InstructionParser.InstructionParser;
+import InstructionMemory.InstructionMemory;
+import RegisterFile.RegisterFile;
+import ReservationStations.ReservationStationManager;
+import DataCache.Cache;
+import DataMemory.Memory;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.Scanner;
+
+
+public class TomasuloSimulator {
+
+    private Queue<Instruction> instructionQueue;
+    private InstructionMemory instructionMemory;
+    private RegisterFile registerFile;
+    private ReservationStationManager reservationStations;
+    private Cache dataCache;
+    private Memory dataMemory;
+    private int PC; // Program Counter
+    private int clockCycle = 0;
+    private int addLatency;
+    private int subLatency;
+    private int mulLatency;
+    private int divLatency;
+    private int cacheMissLatency;
+    private int loadLatency;
+    private int storeLatency;
+
+    public TomasuloSimulator(InstructionParser parser, int numIntegerRegisters, int numFloatingPointRegisters, int cacheSize, int blockSize, int addSubtractSize, int multiplyDivideSize, int instructionLatency) {
+        this.instructionQueue = parser.getInstructionQueue();
+        this.instructionMemory = parser.getInstructionMemory();
+        this.registerFile = new RegisterFile(numIntegerRegisters, numFloatingPointRegisters, 0, 0.0f); // Initialize registers to 0
+        this.reservationStations = new ReservationStationManager(addSubtractSize, multiplyDivideSize);
+        this.dataMemory = new Memory(1024); // 1KB data memory (adjust as needed)
+        this.dataCache = new Cache(cacheSize, blockSize, dataMemory);
+        this.instructionLatency = instructionLatency;
+
+        this.PC = instructionMemory.getSize() - 1; // Set PC to the last instruction's index (adjust as needed)
+
+    }
+
+
+    public void runSimulation() {
+       
+    }
+    
+    
+    private void printComponentStates() {
+    	System.out.println("Register File:");
+        registerFile.displayRegisterFile();
+        System.out.println("\nReservation Stations:");
+       // Display reservation station states here
+        System.out.println("\nData Cache:");
+        dataCache.displayCache();
+    }
+
+
+    private boolean isAllReservationStationsEmpty() {
+     
+    }
+
+    private void issueInstructions() {
+
+    }
+    private void executeInstructions() {
+        // Implement instruction execution logic here.
+        // Check for ready instructions in reservation stations and execute them.
+    }
+
+    private void writeBackResults() {
+        // Implement writeback logic here.
+        // Write results from reservation stations back to the register file.
+    }
+
+
+    public static void main(String[] args) throws Exception {
+    	Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter the path to the instruction file: ");
+        String filePath = scanner.nextLine();
+        
+        System.out.print("Enter cache size (in bytes): ");
+        int cacheSize = scanner.nextInt();
+
+        System.out.print("Enter block size (in bytes): ");
+        int blockSize = scanner.nextInt();
+
+        System.out.print("Enter number of add/subtract reservation stations: ");
+        int addSubtractSize = scanner.nextInt();
+
+        System.out.print("Enter number of multiply/divide reservation stations: ");
+        int multiplyDivideSize = scanner.nextInt();
+
+        System.out.print("Enter instruction latency: ");
+        int instructionLatency = scanner.nextInt();
+
+        InstructionParser parser = new InstructionParser();
+        parser.parseInstructions(filePath);
+        
+        TomasuloSimulator simulator = new TomasuloSimulator(parser, 32, 32, cacheSize, blockSize, addSubtractSize, multiplyDivideSize, instructionLatency); // 32 integer, 32 FP registers
+        simulator.runSimulation();
+
+        scanner.close();
+    }
+}

@@ -1,0 +1,34 @@
+package InstructionMemory;
+
+import Instruction.Instruction;
+import java.util.HashMap;
+import java.util.Map;
+
+public class InstructionMemory {
+    private Map<Integer, Instruction> instructionMemory;
+    private static final int INSTRUCTION_SIZE = 4; // Assuming each instruction is 4 bytes
+
+    public InstructionMemory() {
+        instructionMemory = new HashMap<>();
+    }
+
+    // Method to load an instruction at a specific address
+    public void loadInstruction(int address, Instruction instruction) {
+        instructionMemory.put(address, instruction);
+    }
+
+    // Method to fetch an instruction by address
+    public Instruction fetchInstruction(int address) {
+        return instructionMemory.get(address);
+    }
+
+    // Method to get the next instruction address (for branching)
+    public int getNextAddress(int currentAddress) {
+        return currentAddress + INSTRUCTION_SIZE; // Assuming sequential instructions, 4 bytes each
+    }
+
+    // Method to check if an instruction exists at a given address
+    public boolean hasInstructionAt(int address) {
+        return instructionMemory.containsKey(address);
+    }
+}

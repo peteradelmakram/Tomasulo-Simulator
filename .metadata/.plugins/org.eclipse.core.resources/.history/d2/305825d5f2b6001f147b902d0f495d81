@@ -1,0 +1,246 @@
+package DataCache;
+import java.util.Arrays;
+import DataMemory.Memory;
+
+public class Cache {
+	
+    static class CacheBlock {
+        boolean valid;
+        int tag;
+        byte[] data;
+
+        public boolean isValid() {
+			return valid;
+		}
+
+		public void setValid(boolean valid) {
+			this.valid = valid;
+		}
+
+		public int getTag() {
+			return tag;
+		}
+
+		public void setTag(int tag) {
+			this.tag = tag;
+		}
+
+		public byte[] getData() {
+			return data;
+		}
+
+		public void setData(byte[] data) {
+			this.data = data;
+		}
+
+		public CacheBlock(int blockSize) {
+            this.valid = false;
+            this.tag = -1;
+            this.data = new byte[blockSize];
+        }
+    }
+    
+
+    private final int blockSize;
+    private final CacheBlock[] cache;
+    private final Memory memory;
+    private final int cacheSize;
+
+    public Cache(int cacheSize, int blockSize, Memory memory) {
+        this.cacheSize = cacheSize;
+        this.blockSize = blockSize;
+        this.memory = memory;
+
+        int numBlocks = cacheSize / blockSize;
+        this.cache = new CacheBlock[numBlocks];
+        for (int i = 0; i < numBlocks; i++) {
+            cache[i] = new CacheBlock(blockSize);
+        }
+    }
+
+    public byte[] access(int address) {
+        int blockNumber = (address / blockSize) % cache.length;
+        int tag = address / cacheSize;
+
+        CacheBlock block = cache[blockNumber];
+
+        if (block.valid && block.tag == tag) {
+            // Cache hit
+            System.out.println("Cache hit!");
+        } else {
+            // Cache miss: Load the block from memory
+            System.out.println("Cache miss!");
+            block.valid = true;
+            block.tag = tag;
+            int blockStartAddress = (address / blockSize) * blockSize;
+            for (int i = 0; i < blockSize; i++) {
+                block.data[i] = (byte) memory.readWord(blockStartAddress + i);
+            }
+        }
+        return block.data;
+    }
+    
+    public int getBlockSize() {
+		return blockSize;
+	}
+
+	public CacheBlock[] getCache() {
+		return cache;
+	}
+
+	public Memory getMemory() {
+		return memory;
+	}
+
+	public int getCacheSize() {
+		return cacheSize;
+	}
+
+	public void displayCache() {
+        System.out.println("Cache Contents:");
+        for (int i = 0; i < cache.length; i++) {
+            CacheBlock block = cache[i];
+            System.out.println("Block " + i + ":");
+            System.out.println("  Valid: " + block.valid);
+            System.out.println("  Tag: " + block.tag);
+            System.out.println("  Data: " + Arrays.toString(block.data));
+        }
+    }
+    
+	
+	public int getWord(int address) {
+	    // Get the cache block number
+	    int blockNumber = getBlockNumber(address);
+	    CacheBlock block = cache[blockNumber];
+
+	    // Get the offset within the block (assuming word size is 4 bytes)
+	    int offset = address % blockSize; // This works because the word is 4 bytes and the block is 64 bytes
+
+	    // Ensure the block is valid
+	    if (block.isValid()) {
+	        // Combine bytes into the 4-byte word
+	        int word = (block.getData()[offset] & 0xFF)      // First byte (least significant)
+	                   | ((block.getData()[offset + 1] & 0xFF) << 8)  // Second byte
+	                   | ((block.getData()[offset + 2] & 0xFF) << 16) // Third byte
+	                   | ((block.getData()[offset + 3] & 0xFF) << 24); // Fourth byte
+	        return word;
+	    } else {
+	        // Cache miss, handle as needed
+	        System.out.println("Cache miss!");
+	        return -1;  // Return a default error value or throw exception
+	    }
+	}
+	
+	public double getDoubleFloat(int address) {
+	    // Get the cache block number
+	    int blockNumber = getBlockNumber(address);
+	    CacheBlock block = cache[blockNumber];
+
+	    // Get the offset within the block (assuming word size is 8 bytes for a double)
+	    int offset = address % blockSize;
+
+	    // Ensure the block is valid
+	    if (block.isValid()) {
+	        // Combine bytes into the 8-byte double (in IEEE 754 format)
+	        long bits = ((long) (block.getData()[offset] & 0xFF)) |
+	                    ((long) (block.getData()[offset + 1] & 0xFF) << 8) |
+	                    ((long) (block.getData()[offset + 2] & 0xFF) << 16) |
+	                    ((long) (block.getData()[offset + 3] & 0xFF) << 24) |
+	                    ((long) (block.getData()[offset + 4] & 0xFF) << 32) |
+	                    ((long) (block.getData()[offset + 5] & 0xFF) << 40) |
+	                    ((long) (block.getData()[offset + 6] & 0xFF) << 48) |
+	                    ((long) (block.getData()[offset + 7] & 0xFF) << 56);
+
+	        // Convert the combined bits into a double
+	        return Double.longBitsToDouble(bits);
+	    } else {
+	        // Cache miss, handle as needed
+	        System.out.println("Cache miss!");
+	        return Double.NaN;  // Return NaN (Not-a-Number) on miss
+	    }
+	}
+
+	public long getLong(int address) {
+	    // Get the cache block number
+	    int blockNumber = getBlockNumber(address);
+	    CacheBlock block = cache[blockNumber];
+
+	    // Get the offset within the block (assuming word size is 8 bytes for a long)
+	    int offset = address % blockSize;
+
+	    // Ensure the block is valid
+	    if (block.isValid()) {
+	        // Combine bytes into the 8-byte long
+	        long value = ((long) (block.getData()[offset] & 0xFF)) |
+	                     ((long) (block.getData()[offset + 1] & 0xFF) << 8) |
+	                     ((long) (block.getData()[offset + 2] & 0xFF) << 16) |
+	                     ((long) (block.getData()[offset + 3] & 0xFF) << 24) |
+	                     ((long) (block.getData()[offset + 4] & 0xFF) << 32) |
+	                     ((long) (block.getData()[offset + 5] & 0xFF) << 40) |
+	                     ((long) (block.getData()[offset + 6] & 0xFF) << 48) |
+	                     ((long) (block.getData()[offset + 7] & 0xFF) << 56);
+
+	        return value;
+	    } else {
+	        // Cache miss, handle as needed
+	        System.out.println("Cache miss!");
+	        return 0L;  // Return 0 as the default value for miss (you can also throw an exception if you prefer)
+	    }
+	}
+	
+	public float getSingleFloat(int address) {
+	    // Get the cache block number
+	    int blockNumber = getBlockNumber(address);
+	    CacheBlock block = cache[blockNumber];
+
+	    // Get the offset within the block (assuming word size is 4 bytes)
+	    int offset = address % blockSize;
+
+	    // Ensure the block is valid
+	    if (block.isValid()) {
+	        // Combine bytes into the 4-byte float (in IEEE 754 format)
+	        int bits = (block.getData()[offset] & 0xFF) |
+	                   ((block.getData()[offset + 1] & 0xFF) << 8) |
+	                   ((block.getData()[offset + 2] & 0xFF) << 16) |
+	                   ((block.getData()[offset + 3] & 0xFF) << 24);
+
+	        // Convert the combined bits into a float
+	        return Float.intBitsToFloat(bits);
+	    } else {
+	        // Cache miss, handle as needed
+	        System.out.println("Cache miss!");
+	        return Float.NaN;  // Return NaN (Not-a-Number) on miss
+	    }
+	}
+
+
+	
+    public int getBlockNumber(int address) {
+        return (address / blockSize) % (cacheSize / blockSize);
+    }
+
+    public int getOffset(int address) {
+        return address % blockSize;
+    }
+    
+    public static void main(String[] args) {
+        // Initialize memory (1 MB)
+        Memory memory = new Memory(1 << 10); // 1 MB
+
+        // Initialize cache (1 MB, block size = 64 bytes)
+        // Since memory and cache sizes are the same, we don't need to explicitly set cache size here, it matches memory.
+        Cache cache = new Cache(1 << 10, 64, memory);
+
+        // Write a word (48) into memory at address 100
+
+        memory.writeDoubleFloat(8, 3.14f);
+        
+        
+        System.out.println("Wrote value 48 to memory at address 100.");
+
+        cache.access(8);
+        
+        System.out.println(   cache.getDoubleFloat(8));
+        
+    }
+}

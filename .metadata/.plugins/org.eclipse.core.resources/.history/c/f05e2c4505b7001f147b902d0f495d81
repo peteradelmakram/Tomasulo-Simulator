@@ -1,0 +1,55 @@
+import Instruction.Instruction;
+import InstructionParser.InstructionParser;
+import InstructionMemory.InstructionMemory;
+import RegisterFile.RegisterFile;
+import ReservationStations.ReservationStationManager;
+import DataCache.Cache;
+import DataMemory.Memory;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.Scanner;
+
+public class TomasuloSimulator {
+    // ... (other fields as before) ...
+
+    private void issueInstructions() {
+        Instruction instruction = instructionQueue.poll();
+        if (instruction != null) {
+            boolean issued = reservationStations.dispatchInstruction(instruction);
+            if (issued) {
+                // Update register file tags with the reservation station tag
+                String destReg = instruction.getDestination();
+                String rsTag = reservationStations.getRStag(instruction); //You need to add a method to your ReservationStationManager class for this
+                if(destReg!=null)
+                    registerFile.setRegisterTag(destReg, rsTag);
+            }
+            else {
+                instructionQueue.add(instruction); //put it back at the end of the queue if it could not be dispatched
+            }
+        }
+    }
+
+    private void executeInstructions() {
+        reservationStations.executeInstructions(); //this needs to be updated. Add a clock counter to the reservation station entry, and decrement it. If the counter is 0, then execute
+    }
+
+    private void writeBackResults() {
+        //this needs to be updated. If the reservation station's instruction has completed, then write its results to the register file. Update the tags back to "0".
+    }
+
+    // ... (printComponentStates, isAllReservationStationsEmpty, main method as before, but with the below changes) ...
+
+    public static void main(String[] args) throws Exception {
+        // ... (Scanner input as before) ...
+
+        InstructionParser parser = new InstructionParser();
+        parser.parseInstructions(filePath); //This was missing
+        //Set PC correctly
+        InstructionMemory instructionMemory = parser.getInstructionMemory();
+        int programSize = instructionMemory.getSize();
+
+        TomasuloSimulator simulator = new TomasuloSimulator(parser, 32, 32, cacheSize, blockSize, addSubtractSize, multiplyDivideSize, instructionLatency); 
+        simulator.runSimulation();
+        scanner.close();
+    }
+}

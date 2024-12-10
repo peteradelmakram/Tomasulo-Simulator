@@ -1,0 +1,50 @@
+package ReservationStations;
+import Instruction.Instruction;
+
+public class AdditionReservationStation {
+	private ReservationStationEntry[] stations;
+    private int currentTag;
+
+    public AdditionReservationStation(int size) {
+        stations = new ReservationStationEntry[size];
+        currentTag = 0;
+        for (int i = 0; i < size; i++) {
+            stations[i] = new ReservationStationEntry(generateTag(), "");
+        }
+    }
+
+    // Generate a new unique tag for the instruction
+    private String generateTag() {
+        return "T" + currentTag++;
+    }
+
+    // Dispatch instruction to the reservation station
+    public boolean dispatchInstruction(Instruction instruction) {
+        for (ReservationStationEntry entry : stations) {
+            if (!entry.isBusy()) {
+                entry.setBusy(true);
+                entry.setOperands(null, null); // Initially operands are not available
+                entry.setOperandTags(instruction.getSource1(), instruction.getSource2()); // Assuming operands are tags initially
+                entry.setOp(instruction.getOperation());
+                return true; // Successfully dispatched
+            }
+        }
+        return false; // No available reservation station
+    }
+
+    // Method to check if any instruction in the reservation station is ready to execute
+    public void checkExecution() {
+        for (ReservationStationEntry entry : stations) {
+            if (entry.isBusy() && entry.getVj() != null && entry.getVk() != null) {
+                // The instruction can now execute, simulate the operation
+                System.out.println("Executing " + entry.getOp() + " with operands " + entry.getVj() + " and " + entry.getVk());
+                entry.clear(); // Instruction execution is complete
+            }
+        }
+    }
+
+    // Get the reservation stations
+    public ReservationStationEntry[] getStations() {
+        return stations;
+    }
+}

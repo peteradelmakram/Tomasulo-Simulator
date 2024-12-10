@@ -1,0 +1,40 @@
+package Instruction;
+
+import DataMemory.Memory;
+import DataCache.Cache;
+
+public abstract class Instruction {
+    protected String operation; // Instruction type like "L.D", "ADD.D"
+    protected String[] operands; // Operands like "F6, 0", "F2, F4"
+    protected int address; // Address for memory instructions
+
+    // Constructor
+    public Instruction(String operation, String[] operands) {
+        this.operation = operation;
+        this.operands = operands;
+    }
+
+    // Execute the instruction (abstract method, specific implementations in subclasses)
+    public abstract void execute(Memory memory, Cache cache);
+
+    // Helper methods for parsing operands and addressing
+    protected int parseRegister(String reg) {
+        return Integer.parseInt(reg.substring(1));
+    }
+
+    protected double parseDouble(String value) {
+        return Double.parseDouble(value);
+    }
+
+    protected int parseInt(String value) {
+        return Integer.parseInt(value);
+    }
+
+    public String getOperation() {
+        return operation;
+    }
+
+    public String[] getOperands() {
+        return operands;
+    }
+}

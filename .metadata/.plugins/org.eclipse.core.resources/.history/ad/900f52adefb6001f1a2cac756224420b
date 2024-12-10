@@ -1,0 +1,93 @@
+package DataCache;
+import java.util.Arrays;
+import DataMemory.Memory;
+
+public class Cache {
+	
+    static class CacheBlock {
+        boolean valid;
+        int tag;
+        byte[] data;
+
+        public CacheBlock(int blockSize) {
+            this.valid = false;
+            this.tag = -1;
+            this.data = new byte[blockSize];
+        }
+    }
+    
+
+    private final int blockSize;
+    private final CacheBlock[] cache;
+    private final Memory memory;
+    private final int cacheSize;
+
+    public Cache(int cacheSize, int blockSize, Memory memory) {
+        this.cacheSize = cacheSize;
+        this.blockSize = blockSize;
+        this.memory = memory;
+
+        int numBlocks = cacheSize / blockSize;
+        this.cache = new CacheBlock[numBlocks];
+        for (int i = 0; i < numBlocks; i++) {
+            cache[i] = new CacheBlock(blockSize);
+        }
+    }
+
+    public void access(int address) {
+        int blockNumber = getBlockNumber(address);  // Get the cache block number
+        int offset = getOffset(address);  // Get the offset within the block
+        int blockStartAddress = blockNumber * blockSize;  // Start address of the block in memory
+        
+        // Check if the data for this block is already loaded in the cache
+        if (cache[blockNumber].valid && cache[blockNumber].tag == blockStartAddress) {
+            System.out.println("Cache hit! Data found in cache.");
+            // Retrieve the data at the offset within the block
+            System.out.println("Data at offset " + offset + ": " + cache[blockNumber].data[offset]);
+        } else {
+            System.out.println("Cache miss! Loading data from memory...");
+            // Cache miss: Load the block from memory into the cache
+            loadBlockIntoCache(blockNumber, blockStartAddress);
+            // After loading the block, retrieve the data at the offset
+            System.out.println("Data at offset " + offset + ": " + cache[blockNumber].data[offset]);
+        }
+    }
+    
+    public void displayCache() {
+        System.out.println("Cache Contents:");
+        for (int i = 0; i < cache.length; i++) {
+            CacheBlock block = cache[i];
+            System.out.println("Block " + i + ":");
+            System.out.println("  Valid: " + block.valid);
+            System.out.println("  Tag: " + block.tag);
+            System.out.println("  Data: " + Arrays.toString(block.data));
+        }
+    }
+    
+    public int getBlockNumber(int address) {
+        return (address / blockSize) % (cacheSize / blockSize);
+    }
+
+    public int getOffset(int address) {
+        return address % blockSize;
+    }
+    
+    public static void main(String[] args) {
+        // Initialize memory (1 MB)
+        Memory memory = new Memory(1 << 10); // 1 MB
+
+        // Initialize cache (1 MB, block size = 64 bytes)
+        // Since memory and cache sizes are the same, we don't need to explicitly set cache size here, it matches memory.
+        Cache cache = new Cache(1 << 10, 64, memory);
+
+        // Write a word (48) into memory at address 100
+        memory.writeWord(8, 48);
+        System.out.println("Wrote value 48 to memory at address 100.");
+
+        // Access the memory address 100 through the cache
+        cache.access(8);
+
+        // Display the cache state
+        cache.displayCache();
+    }
+}

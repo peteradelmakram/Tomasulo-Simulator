@@ -1,0 +1,67 @@
+package ReservationStations;
+
+import Instruction.Instruction;
+
+public class ReservationStationManager {
+    private AdditionReservationStation addSubtractRS;
+    private MultiplicationReservationStation multiplyDivideRS;
+
+    public ReservationStationManager(int addSubtractSize, int multiplyDivideSize) {
+        this.addSubtractRS = new AdditionReservationStation(addSubtractSize);
+        this.multiplyDivideRS = new MultiplicationReservationStation(multiplyDivideSize);
+    }
+    
+    // Dispatch instructions to the appropriate reservation station
+    public boolean hasAvailableSlotFor(Instruction instruction) {
+        if (isAddSubOperation(instruction)) {
+            return addSubtractRS.hasAvailableSlot();
+        } else if (isMulDivOperation(instruction)) {
+            return multiplyDivideRS.hasAvailableSlot();
+        }
+        return false; // No available slot
+    }
+    
+    
+    public boolean isAddSubOperation(Instruction instruction) {
+        return instruction.getOperation().equals("ADD.D") || instruction.getOperation().equals("SUB.D") ||
+                instruction.getOperation().equals("DADDI") || instruction.getOperation().equals("DSUBI") ||
+                instruction.getOperation().equals("ADD.S") || instruction.getOperation().equals("SUB.S");
+    }
+
+    public boolean isMulDivOperation(Instruction instruction) {
+        return instruction.getOperation().equals("MUL.D") || instruction.getOperation().equals("DIV.D") ||
+                instruction.getOperation().equals("MUL.S") || instruction.getOperation().equals("DIV.S");
+    }
+
+    // Dispatch instructions to the appropriate reservation station
+    public void dispatchInstruction(Instruction instruction) {
+        if (isAddSubOperation(instruction)) {
+            addSubtractRS.dispatchInstruction(instruction);
+        } else if (isMulDivOperation(instruction)) {
+            multiplyDivideRS.dispatchInstruction(instruction);
+        }
+    }
+    
+    public void issueInstruction(Instruction instruction) {
+    	if (isAddSubOperation(instruction)) {
+            if (addSubtractRS.hasAvailableSlot()) {
+                addSubtractRS.dispatchInstruction(instruction);
+            } else {
+                System.out.println("No available slot in Addition/Subtraction reservation station.");
+            }
+        } else if (isMulDivOperation(instruction)) {
+            if (multiplyDivideRS.hasAvailableSlot()) {
+                multiplyDivideRS.dispatchInstruction(instruction);
+            } else {
+                System.out.println("No available slot in Multiplication/Division reservation station.");
+            }
+        } else {
+            System.out.println("Unknown instruction type: " + instruction.getOperation());
+        }
+    }
+
+    public void executeInstructions() {
+        addSubtractRS.checkExecution();
+        multiplyDivideRS.checkExecution();
+    }
+}

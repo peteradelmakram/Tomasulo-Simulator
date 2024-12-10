@@ -1,0 +1,130 @@
+package RegisterFile;
+import java.util.HashMap;
+import java.util.Map;
+
+public class RegisterFile {
+    // Inner class to represent a register
+    static class Register {
+        private String tag;     // Reservation station tag
+        private Object value;   // Value of the register (can be Integer or Float)
+
+        public Register() {
+            this.tag = null;
+            this.value = null;
+        }
+
+        public String getTag() {
+            return tag;
+        }
+
+        public void setTag(String tag) {
+            this.tag = tag;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public void setValue(Object value) {
+            this.value = value;
+        }
+    }
+
+    // Maps for integer and floating-point registers
+    private final Map<String, Register> integerRegisters;
+    private final Map<String, Register> floatingPointRegisters;
+
+    // Constructor
+    public RegisterFile(int numIntegerRegisters, int numFloatingPointRegisters) {
+        integerRegisters = new HashMap<>();
+        floatingPointRegisters = new HashMap<>();
+
+        // Initialize integer registers (R0 to R[numIntegerRegisters - 1])
+        for (int i = 0; i < numIntegerRegisters; i++) {
+            integerRegisters.put("R" + i, new Register());
+        }
+
+        // Initialize floating-point registers (F0 to F[numFloatingPointRegisters - 1])
+        for (int i = 0; i < numFloatingPointRegisters; i++) {
+            floatingPointRegisters.put("F" + i, new Register());
+        }
+    }
+
+    // Methods to interact with registers
+    public Object getRegisterValue(String regName) {
+        if (integerRegisters.containsKey(regName)) {
+            return integerRegisters.get(regName).getValue();
+        } else if (floatingPointRegisters.containsKey(regName)) {
+            return floatingPointRegisters.get(regName).getValue();
+        } else {
+            throw new IllegalArgumentException("Invalid register name: " + regName);
+        }
+    }
+
+    public void setRegisterValue(String regName, Object value) {
+        if (integerRegisters.containsKey(regName)) {
+            integerRegisters.get(regName).setValue(value);
+        } else if (floatingPointRegisters.containsKey(regName)) {
+            floatingPointRegisters.get(regName).setValue(value);
+        } else {
+            throw new IllegalArgumentException("Invalid register name: " + regName);
+        }
+    }
+
+    public String getRegisterTag(String regName) {
+        if (integerRegisters.containsKey(regName)) {
+            return integerRegisters.get(regName).getTag();
+        } else if (floatingPointRegisters.containsKey(regName)) {
+            return floatingPointRegisters.get(regName).getTag();
+        } else {
+            throw new IllegalArgumentException("Invalid register name: " + regName);
+        }
+    }
+
+    public void setRegisterTag(String regName, String tag) {
+        if (integerRegisters.containsKey(regName)) {
+            integerRegisters.get(regName).setTag(tag);
+        } else if (floatingPointRegisters.containsKey(regName)) {
+            floatingPointRegisters.get(regName).setTag(tag);
+        } else {
+            throw new IllegalArgumentException("Invalid register name: " + regName);
+        }
+    }
+
+    // Debugging method to display the state of the register file
+    public void displayRegisterFile() {
+        System.out.println("Integer Registers:");
+        for (String regName : integerRegisters.keySet()) {
+            Register reg = integerRegisters.get(regName);
+            System.out.println(regName + ": Value=" + reg.getValue() + ", Tag=" + reg.getTag());
+        }
+
+        System.out.println("Floating-Point Registers:");
+        for (String regName : floatingPointRegisters.keySet()) {
+            Register reg = floatingPointRegisters.get(regName);
+            System.out.println(regName + ": Value=" + reg.getValue() + ", Tag=" + reg.getTag());
+        }
+    }
+    
+    
+
+        public static void main(String[] args) {
+            // Create a register file with 32 integer and 32 floating-point registers
+            RegisterFile registerFile = new RegisterFile(32, 32);
+
+            // Set values and tags
+            registerFile.setRegisterValue("R1", 42);
+            registerFile.setRegisterTag("R1", "RS1");
+            registerFile.setRegisterValue("F2", 3.14f);
+            registerFile.setRegisterTag("F2", "RS2");
+
+            // Display the register file
+            registerFile.displayRegisterFile();
+
+            // Get and print specific register values
+            System.out.println("R1 Value: " + registerFile.getRegisterValue("R1"));
+            System.out.println("F2 Tag: " + registerFile.getRegisterTag("F2"));
+        }
+    
+
+}

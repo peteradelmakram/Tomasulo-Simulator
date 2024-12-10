@@ -1,0 +1,72 @@
+package DataMemory;
+
+public class Memory {
+	  private final byte[] memory;
+
+	    public Memory(int size) {
+	        memory = new byte[size];
+	    }
+
+	    public void writeWord(int address, int value) {
+	        for (int i = 0; i < 4; i++) {
+	            memory[address + i] = (byte) ((value >> (i * 8)) & 0xFF);
+	        }
+	    }
+
+	    public int readWord(int address) {
+	        int value = 0;
+	        for (int i = 0; i < 4; i++) {
+	            value |= (memory[address + i] & 0xFF) << (i * 8);
+	        }
+	        return value;
+	    }
+
+	    public void writeLong(int address, long value) {
+	        for (int i = 0; i < 8; i++) {
+	            memory[address + i] = (byte) ((value >> (i * 8)) & 0xFF);
+	        }
+	    }
+
+
+	    public double readDouble(int address) {
+	        long bits = 0;
+	        for (int i = 0; i < 8; i++) {
+	            bits |= (long) (memory[address + i] & 0xFF) << (i * 8);
+	        }
+	        return Double.longBitsToDouble(bits);
+	    }
+	    
+	    // Write a 32-bit floating point number (single precision) into memory
+	    public void writeFloat(int address, float value) {
+	        int bits = Float.floatToIntBits(value);
+	        for (int i = 0; i < 4; i++) {
+	            memory[address + i] = (byte) ((bits >> (i * 8)) & 0xFF);
+	        }
+	    }
+
+	    // Read a 32-bit floating point number (single precision) from memory
+	    public float readFloat(int address) {
+	        int bits = 0;
+	        for (int i = 0; i < 4; i++) {
+	            bits |= (memory[address + i] & 0xFF) << (i * 8);
+	        }
+	        return Float.intBitsToFloat(bits);
+	    }
+
+	    // Write a 64-bit floating point number (double precision) to memory
+	    public void writeDoubleFloat(int address, double value) {
+	        long bits = Double.doubleToLongBits(value);
+	        for (int i = 0; i < 8; i++) {
+	            memory[address + i] = (byte) ((bits >> (i * 8)) & 0xFF);
+	        }
+	    }
+
+	    // Read a 64-bit floating point number (double precision) from memory
+	    public double readDoubleFloat(int address) {
+	        long bits = 0;
+	        for (int i = 0; i < 8; i++) {
+	            bits |= (long) (memory[address + i] & 0xFF) << (i * 8);
+	        }
+	        return Double.longBitsToDouble(bits);
+	    }
+}

@@ -1,0 +1,73 @@
+package DataCache;
+
+import DataMemory.Memory;
+
+public class Cache {
+	
+    static class CacheBlock {
+        boolean valid;
+        int tag;
+        byte[] data;
+
+        public CacheBlock(int blockSize) {
+            this.valid = false;
+            this.tag = -1;
+            this.data = new byte[blockSize];
+        }
+    }
+    
+
+    private final int blockSize;
+    private final CacheBlock[] cache;
+    private final Memory memory;
+    private final int cacheSize;
+
+    public Cache(int cacheSize, int blockSize, Memory memory) {
+        this.cacheSize = cacheSize;
+        this.blockSize = blockSize;
+        this.memory = memory;
+
+        int numBlocks = cacheSize / blockSize;
+        this.cache = new CacheBlock[numBlocks];
+        for (int i = 0; i < numBlocks; i++) {
+            cache[i] = new CacheBlock(blockSize);
+        }
+    }
+
+    public byte[] access(int address) {
+        int blockNumber = (address / blockSize) % cache.length;
+        int tag = address / cacheSize;
+
+        CacheBlock block = cache[blockNumber];
+
+        if (block.valid && block.tag == tag) {
+            // Cache hit
+            System.out.println("Cache hit!");
+        } else {
+            // Cache miss: Load the block from memory
+            System.out.println("Cache miss!");
+            block.valid = true;
+            block.tag = tag;
+            int blockStartAddress = (address / blockSize) * blockSize;
+            for (int i = 0; i < blockSize; i++) {
+                block.data[i] = (byte) memory.readWord(blockStartAddress + i);
+            }
+        }
+        return block.data;
+    }
+    
+    
+    public static void main(String[] args) {
+        // Memory size = 1 MB
+        Memory memory = new Memory(1 << 20);
+
+        // Cache: 16 KB, Block size = 64 bytes
+        Cache cache = new Cache(16 * 1024, 64, memory);
+
+        // Write a word into memory
+        memory.writeWord(100, 42);
+
+        // Access memory through cache
+        cache.access(100);
+    }
+}

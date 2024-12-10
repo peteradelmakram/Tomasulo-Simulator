@@ -1,0 +1,28 @@
+package ReservationStations;
+
+import Instruction.Instruction;
+
+public class ReservationStationManager {
+    private AdditionReservationStation addSubtractRS;
+    private MultiplyDivideReservationStation multiplyDivideRS;
+
+    public ReservationStationManager(int addSubtractSize, int multiplyDivideSize) {
+        this.addSubtractRS = new AdditionReservationStation(addSubtractSize);
+        this.multiplyDivideRS = new MultiplyDivideReservationStation(multiplyDivideSize);
+    }
+
+    // Dispatch instructions to the appropriate reservation station
+    public void dispatchInstruction(Instruction instruction) {
+        if (instruction.getOperation().equals("ADD.D") || instruction.getOperation().equals("SUB.D")) {
+            addSubtractRS.dispatchInstruction(instruction);
+        } else if (instruction.getOperation().equals("MUL.D") || instruction.getOperation().equals("DIV.D")) {
+            multiplyDivideRS.dispatchInstruction(instruction);
+        }
+    }
+
+    // Check the reservation stations for ready instructions and execute them
+    public void executeInstructions() {
+        addSubtractRS.checkExecution();
+        multiplyDivideRS.checkExecution();
+    }
+}
