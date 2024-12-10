@@ -1,6 +1,10 @@
 package ReservationStations;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import Instruction.Instruction;
+
 
 public class ReservationStationManager {
     private AdditionReservationStation addSubtractRS;
@@ -70,5 +74,16 @@ public class ReservationStationManager {
     public void printState() {
         addSubtractRS.printState();
         multiplyDivideRS.printState();
+    }
+    
+    public List<ReservationStationEntry> getAllStations() {
+        List<ReservationStationEntry> allStations = new ArrayList<>();
+        for (ReservationStationEntry entry : addSubtractRS.getStations()) {
+            allStations.add(entry);
+        }
+        for (ReservationStationEntry entry : multiplyDivideRS.getStations()) {
+            allStations.add(entry);
+        }
+        return allStations;
     }
 }

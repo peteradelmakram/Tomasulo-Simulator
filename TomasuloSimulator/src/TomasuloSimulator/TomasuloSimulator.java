@@ -10,14 +10,12 @@ import DataCache.Cache;
 import DataMemory.Memory;
 import java.util.Queue;
 import java.io.IOException;
-import java.nio.Buffer;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Scanner;
 import Buffer.BufferManager;
-import Buffer.LoadBuffer;
 import Buffer.LoadBufferEntry;
-import Buffer.StoreBuffer;
 import Buffer.StoreBufferEntry;
+import ExecutionTable.ExecutionTableEntry;
 
 public class TomasuloSimulator {
 	
@@ -38,6 +36,9 @@ public class TomasuloSimulator {
     private int storeLatency;
     private InstructionParser parser;
     private BufferManager buffers;
+    private List<ExecutionTableEntry> executionTable;
+
+    
 
     // Constructor to initialize all components of the simulator
     public TomasuloSimulator(int numIntegerRegisters, int numFloatingPointRegisters, int blockSize, 
@@ -46,10 +47,10 @@ public class TomasuloSimulator {
                               int cacheMissLatency, int loadLatency, int storeLatency,
                               int loadBufferSize, int storeBufferSize) {
         
+    	// Parse the instructions in the file.
         try {
 			this.parser = new InstructionParser("src/instructions.txt");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
   
@@ -64,7 +65,8 @@ public class TomasuloSimulator {
         this.dataMemory = new Memory(1024); // Initialize memory with 1024 bytes
         this.dataCache = new Cache(1024, blockSize, dataMemory); // Initialize cache with 1024 bytes and block size
 
-        // Set Program Counter (PC) to 0 initially (first instruction)
+        // Set PC to last instruction (assuming all instructions are intially loaded in the queue, the only case we'll
+        // need to use this is on branches. On Branches, we must fetch the instruction at the address and add it to the queue.
         this.PC = this.instructionMemory.getSize() - 1;
 
         // Set latencies for various operations
@@ -112,7 +114,49 @@ public class TomasuloSimulator {
         return instructionMemory;
     }
 
-  
+    public int getLatency(String opcode) {
+        switch (opcode) {
+            case "ADD.D":
+            case "ADD.S":
+            case "DADDI":
+            case "DSUBI":
+                return addLatency;
+
+            case "SUB.D":
+            case "SUB.S":
+                return subLatency;
+
+            case "MUL.D":
+            case "MUL.S":
+                return mulLatency;
+
+            case "DIV.D":
+            case "DIV.S":
+                return divLatency;
+
+            case "L.D":
+            case "L.S":
+                return loadLatency;
+
+            case "S.D":
+            case "S.S":
+                return storeLatency;
+
+            default:
+                throw new IllegalArgumentException("Unknown operation: " + opcode);
+        }
+    }
+    
+    public ExecutionTableEntry findExecutionTableEntry(Instruction instruction) {
+        for (ExecutionTableEntry entry : executionTable) {
+            if (entry.getInstruction() == instruction) {
+                return entry;
+            }
+        }
+        // If no entry found for the instruction, you can either throw an exception or return null
+        throw new IllegalArgumentException("Execution entry not found for instruction: " + instruction);
+    }
+
     public void MapInstructionToStation(ReservationStationEntry Station, Instruction instruction) {
     	Boolean isDirect = false;
         String operand1 = instruction.getSource1();
@@ -281,6 +325,10 @@ public class TomasuloSimulator {
                 	   ReservationStationEntry Station = reservationStations.getStation(instructionTag);
                 	   
                 	   MapInstructionToStation(Station, instruction);
+                	   
+                	   ExecutionTableEntry entry = new ExecutionTableEntry(instruction);
+                       entry.setIssueCycle(clockCycle);
+                       executionTable.add(entry);
 
                        issued = true;
                    }else {
@@ -299,8 +347,15 @@ public class TomasuloSimulator {
             			StoreBufferEntry sBuffer = buffers.getStoreBuffer(instructionTag);
             			MapInstructionToStoreBuffer(sBuffer, instruction);
             		}
+            		
+            		ExecutionTableEntry entry = new ExecutionTableEntry(instruction);
+                    entry.setIssueCycle(clockCycle);
+                    executionTable.add(entry);
+                    issued = true;
+
             	}
-                issued = true;
+            	
+            	
 
             }
 
@@ -308,6 +363,57 @@ public class TomasuloSimulator {
         }
         return false;
     }
+    
+    
+   
+    
+    public void executeInstructions() {
+    	// Biko , this how the execution should work, you should iterate on the reservation stations, 
+    	// if you find a reservation station with both valid Vj & Vk, and busy bits, then you should start
+    	// execution. Same should happen for the load buffers, and the store buffers. 
+    	// Then, we need another method to handle the specific execution (Functional unit)
+    	// so, we execute the method ExecuteInstructions() , it sets the setExecuting boolean to true, 
+    	// then we need to call another method FunctionalUnitExecution(), this one should look for reservation,
+    	// stations with executing == true. If executing == true, then using the opcode in the reservation station,
+    	// you should get the Vj, and Vk, and calculate the result. However, even though you calculate the result, 
+    	// The result should technically be invalid until currentClockCycle == (startClockCycle + Latency), 
+    	// After which we should start implementing the Write Back stage. 
+    	// We'll write back in FIFO order, but we'll check if we have two instructions with ready output, 
+    	// then we have to check the FIFO order, then check if one of the results they want to write back is needed by
+    	// either any reservation station, load buffer, store buffer, or the register file. If one of them is needed and another isn't, we should write back the one that's needed.
+    	
+    	
+//        for (ReservationStationEntry station : reservationStations.getAllStations()) {
+//            if (station.isBusy() && station.getVj() != null && station.getVk() != null) {
+//                if (!station.isExecuting()) {
+//                    // Start execution
+//                    station.setExecuting(true);
+//                    station.setExecutionRemainingCycles(getLatency(station.getOp()));
+//
+//                    // Update execution table
+//                    ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
+//                    entry.setStartExecutionCycle(clockCycle);
+//                } else {
+//                    station.decrementExecutionRemainingCycles();
+//                    if (station.getExecutionRemainingCycles() == 0) {
+//                        // Execution complete
+//                        station.clear();
+//
+//                        // Update execution table
+//                        ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
+//                        entry.setEndExecutionCycle(clockCycle);
+//                    }
+//                }
+//            }
+//        }
+        
+        
+        
+    }
+    
+
+
+    
     // Simulate Tomasulo's algorithm execution
     public void runSimulator() {
         while (true) {

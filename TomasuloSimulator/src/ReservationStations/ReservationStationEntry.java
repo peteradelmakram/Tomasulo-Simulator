@@ -10,8 +10,53 @@ public class ReservationStationEntry {
     private String Qk;  // Tag of instruction providing operand 2 (if not ready)
     private boolean busy; // Whether the reservation station is occupied
     private Instruction instruction;
+    private int startExec; // Cycle we start executing
+    private int endExec; // Cycle we stop executing
+    private Boolean isExecuting; // Flag to detect already executing instructions. 
+    private int executionRemainingCycles; // track number of cycles needed to finish this instruction. (left most field in the table.)
     
-    public Instruction getInstruction() {
+    
+    public Boolean getIsExecuting() {
+		return isExecuting;
+	}
+
+	public void setIsExecuting(Boolean isExecuting) {
+		this.isExecuting = isExecuting;
+	}
+
+	public int getExecutionRemainingCycles() {
+		return executionRemainingCycles;
+	}
+
+	public void setExecutionRemainingCycles(int executionRemainingCycles) {
+		this.executionRemainingCycles = executionRemainingCycles;
+	}
+
+	public Boolean isExecuting() {
+		return isExecuting;
+	}
+
+	public void setExecuting(Boolean isExecuting) {
+		this.isExecuting = isExecuting;
+	}
+
+	public int getStartExec() {
+		return startExec;
+	}
+
+	public void setStartExec(int startExec) {
+		this.startExec = startExec;
+	}
+
+	public int getEndExec() {
+		return endExec;
+	}
+
+	public void setEndExec(int endExec) {
+		this.endExec = endExec;
+	}
+
+	public Instruction getInstruction() {
 		return instruction;
 	}
 
@@ -106,4 +151,11 @@ public class ReservationStationEntry {
         this.Qk = null;
         this.busy = false;
     }
+    
+    public void decrementExecutionRemainingCycles() {
+        if (executionRemainingCycles > 0) {
+            executionRemainingCycles--;
+        }
+    }
+
 }

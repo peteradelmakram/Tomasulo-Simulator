@@ -50,10 +50,10 @@ public class Main {
         simulator.getReservationStations().printState(); 
 
         System.out.println("\nLoad Buffers:");
-        simulator.getBuffers().getLoadBuffer().printState();
+        simulator.getBuffers().getLoadBuffers().printState();
 
         System.out.println("\nStore Buffers:");
-        simulator.getBuffers().getStoreBuffer().printState();
+        simulator.getBuffers().getStoreBuffers().printState();
 
         System.out.println("\nRegister File:");
         simulator.getRegisterFile().printState();

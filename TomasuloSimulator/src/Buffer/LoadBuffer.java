@@ -24,6 +24,7 @@ public class LoadBuffer {
         for (LoadBufferEntry entry : buffer) {
             if (!entry.isBusy()) {
                 entry.setBusy(true);
+                entry.setInstruction(instruction);
                 return entry.getTag();
             }
         }

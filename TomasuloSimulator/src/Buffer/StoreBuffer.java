@@ -24,6 +24,7 @@ public class StoreBuffer {
         for (StoreBufferEntry entry : buffer) {
             if (!entry.isBusy()) {
                 entry.setBusy(true);
+                entry.setInstruction(instruction);
                 return entry.getTag();
 
             }

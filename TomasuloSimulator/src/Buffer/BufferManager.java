@@ -50,11 +50,11 @@ public class BufferManager {
     	return storeBuffer.getBuffer(tag);
     }
     
-    public LoadBuffer getLoadBuffer() {
+    public LoadBuffer getLoadBuffers() {
     	return loadBuffer;
     }
     
-    public StoreBuffer getStoreBuffer() {
+    public StoreBuffer getStoreBuffers() {
     	return storeBuffer;
     }
     

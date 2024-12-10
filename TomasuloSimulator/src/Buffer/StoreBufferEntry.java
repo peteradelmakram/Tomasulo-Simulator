@@ -1,11 +1,18 @@
 package Buffer;
 
+import Instruction.Instruction;
+
 public class StoreBufferEntry {
     private String tag;   // Unique identifier for the entry
     private String address; // Address of the store instruction
     private boolean busy;  // Whether the store buffer entry is occupied
     private Object value;  // Value to be stored (only relevant if available)
     private String Q;      // Tag of the instruction producing the value (if not ready)
+    private int startExecutionCycle;
+    private int endExecutionCycle;
+    private int executionRemainingCycles;
+    private Boolean isExecuting; 
+    Instruction instruction;
 
     // Constructor
     public StoreBufferEntry(String tag, String address) {
@@ -15,7 +22,54 @@ public class StoreBufferEntry {
         this.Q = null;     // Initially no instruction is producing the value
         this.busy = false;
     }
+    
+    
+    
+    public Instruction getInstruction() {
+		return instruction;
+	}
 
+
+
+	public void setInstruction(Instruction instruction) {
+		this.instruction = instruction;
+	}
+
+
+
+	public int getStartExecutionCycle() {
+		return startExecutionCycle;
+	}
+
+	public Boolean isExecuting() {
+		return isExecuting;
+	}
+
+	public void setExecuting(Boolean isExecuting) {
+		this.isExecuting = isExecuting;
+	}
+
+	public void setStartExecutionCycle(int startExecutionCycle) {
+		this.startExecutionCycle = startExecutionCycle;
+	}
+
+	public int getEndExecutionCycle() {
+		return endExecutionCycle;
+	}
+
+	public void setEndExecutionCycle(int endExecutionCycle) {
+		this.endExecutionCycle = endExecutionCycle;
+	}
+
+    
+    public int getExecutionRemainingCycles() {
+		return executionRemainingCycles;
+	}
+
+
+	public void setExecutionRemainingCycles(int executionRemainingCycles) {
+		this.executionRemainingCycles = executionRemainingCycles;
+	}
     public void setTag(String tag) {
 		this.tag = tag;
 	}
@@ -59,8 +113,6 @@ public class StoreBufferEntry {
     }
 
     public void clear() {
-        this.value = null;
-        this.Q = null;
         this.busy = false;
     }
 }
