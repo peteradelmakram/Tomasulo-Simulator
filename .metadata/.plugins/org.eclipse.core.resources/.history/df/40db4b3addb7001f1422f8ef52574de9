@@ -375,11 +375,9 @@ public class TomasuloSimulator {
         // Process reservation stations
         for (ReservationStationEntry station : reservationStations.getAllStations()) {
         	
-            if (station.isBusy() && station.getVj() != null && station.getVk() != null && station.getEndExec() < 0) {
+            if (station.isBusy() && station.getVj() != null && station.getVk() != null) {
                 if (!station.isExecuting() && station.getIssueCycle() < clockCycle) {
-                	
-                	
-                	// Start execution one cycle after issuing
+                    // Start execution one cycle after issuing
                     station.setExecuting(true);
                     station.setExecutionRemainingCycles(getLatency(station.getOp()));
 
