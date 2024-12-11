@@ -404,7 +404,7 @@ public class TomasuloSimulator {
                 int address = Integer.parseInt(loadBuffer.getAddress());
                 ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
 
-                if (!loadBuffer.isExecuting() && loadBuffer.getIssueCycle() < clockCycle && !loadBuffer.isReadyForWriteBack()) {
+                if (!loadBuffer.isExecuting() && loadBuffer.getIssueCycle() < clockCycle ) {
                     // Start load execution one cycle after issuing
                     loadBuffer.setExecuting(true);
                     loadBuffer.setExecutionRemainingCycles(loadLatency);
@@ -447,7 +447,6 @@ public class TomasuloSimulator {
                             loadBuffer.setReadyForWriteBack(true);
                             loadBuffer.setEndExecutionCycle(clockCycle);
                             entry.setEndExecutionCycle(clockCycle);
-                            loadBuffer.setIsExecuting(false);
                         }
                     }
                 }

@@ -404,7 +404,7 @@ public class TomasuloSimulator {
                 int address = Integer.parseInt(loadBuffer.getAddress());
                 ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
 
-                if (!loadBuffer.isExecuting() && loadBuffer.getIssueCycle() < clockCycle && !loadBuffer.isReadyForWriteBack()) {
+                if (!loadBuffer.isExecuting() && loadBuffer.getIssueCycle() < clockCycle - 1) {
                     // Start load execution one cycle after issuing
                     loadBuffer.setExecuting(true);
                     loadBuffer.setExecutionRemainingCycles(loadLatency);
@@ -414,6 +414,7 @@ public class TomasuloSimulator {
 
                 if (loadBuffer.isExecuting()) {
                     if (!loadBuffer.isStallCyclesResolved()) {
+                        // Account for stall cycles during the first load
                         if (clockCycle - entry.getStartExecutionCycle() >= cacheMissLatency) {
                             loadBuffer.setStallCyclesResolved(true);
                         }
@@ -447,7 +448,6 @@ public class TomasuloSimulator {
                             loadBuffer.setReadyForWriteBack(true);
                             loadBuffer.setEndExecutionCycle(clockCycle);
                             entry.setEndExecutionCycle(clockCycle);
-                            loadBuffer.setIsExecuting(false);
                         }
                     }
                 }
@@ -459,7 +459,7 @@ public class TomasuloSimulator {
             if (storeBuffer.isBusy() && storeBuffer.getAddress() != null) {
                 ExecutionTableEntry entry = findExecutionTableEntry(storeBuffer.getInstruction());
 
-                if (!storeBuffer.isExecuting() && storeBuffer.getIssueCycle() < clockCycle) {
+                if (!storeBuffer.isExecuting() && storeBuffer.getIssueCycle() < clockCycle - 1) {
                     // Start store execution one cycle after issuing
                     storeBuffer.setExecuting(true);
                     storeBuffer.setExecutionRemainingCycles(storeLatency);
@@ -484,7 +484,7 @@ public class TomasuloSimulator {
                             throw new IllegalArgumentException("Unsupported value type for store: " + value);
                         }
                         
-                        storeBuffer.setEndExecutionCycle(clockCycle);
+                        storeBuffer.clear();
                         entry.setEndExecutionCycle(clockCycle);
                     }
                 }
@@ -519,7 +519,7 @@ public class TomasuloSimulator {
     	}
     	 // Process load buffers
         for (LoadBufferEntry loadBuffer : buffers.getLoadBuffers().getBuffer()) {
-            if (loadBuffer.isReadyForWriteBack() && loadBuffer.getEndExecutionCycle() < clockCycle) {
+            if (loadBuffer.isReadyForWriteBack()) {
                 // Write back the loaded value to the register file
                 String tag = loadBuffer.getTag();
                 Object loadedValue = loadBuffer.getLoadedValue();
@@ -533,7 +533,32 @@ public class TomasuloSimulator {
                 // Only one instruction can write back per cycle
                 break;
             }
-        } 	
+        }
+    	
+
+    	    
+
+//        for (LoadBufferEntry loadBuffer : buffers.getLoadBuffers().getBuffer()) {
+//            // Check if the load buffer entry is ready for write-back
+//            if (loadBuffer.isBusy() && loadBuffer.getExecutionRemainingCycles() == 0) {
+//                // The result is the value loaded from memory
+//                Object result = loadBuffer.getLoadedValue();
+//
+//                // Propagate the result to dependent components
+//                String tag = loadBuffer.getTag();
+//                updateDependents(tag, result);
+//
+//                // Mark the buffer as cleared
+//                loadBuffer.clear();
+//
+//                // Update the execution table
+//                ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
+//                entry.setWriteBackCycle(clockCycle);
+//
+//                // Only one instruction can write back per cycle
+//                break;
+//            }
+//        }
     }
     
 
