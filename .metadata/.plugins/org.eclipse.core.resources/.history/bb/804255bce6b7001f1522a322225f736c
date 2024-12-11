@@ -470,7 +470,7 @@ public class TomasuloSimulator {
             if (storeBuffer.isBusy() && storeBuffer.getAddress() != null) {
                 ExecutionTableEntry entry = findExecutionTableEntry(storeBuffer.getInstruction());
 
-                if (!storeBuffer.isExecuting() && storeBuffer.getIssueCycle() < clockCycle && storeBuffer.getValue() != null) {
+                if (!storeBuffer.isExecuting() && storeBuffer.getIssueCycle() < clockCycle) {
                     // Start store execution one cycle after issuing
                     storeBuffer.setExecuting(true);
                     
@@ -481,7 +481,6 @@ public class TomasuloSimulator {
                     }
                     
                     entry.setStartExecutionCycle(clockCycle);
-                    
                 } else if (storeBuffer.isExecuting() && storeBuffer.getValue() != null) {
                     storeBuffer.decrementExecutionRemainingCycles();
 

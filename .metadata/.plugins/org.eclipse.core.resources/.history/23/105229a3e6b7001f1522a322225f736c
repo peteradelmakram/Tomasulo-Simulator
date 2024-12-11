@@ -25,7 +25,13 @@ public class Main {
     	        );
     	 
     	 	simulator.runSimulator();
+        
+
+    	 
+        // Run one instruction issue cycle
        
+
+        // Print the state after issuing
     }
 
 //    private static void printState(TomasuloSimulator simulator) {
