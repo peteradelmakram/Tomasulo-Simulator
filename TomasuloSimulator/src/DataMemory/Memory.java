@@ -42,4 +42,11 @@ public class Memory {
 	        return value;
 	    }
 
+		    public void writeByte(int address, byte value) {
+        if (address < 0 || address >= memory.length) {
+            throw new IndexOutOfBoundsException("Invalid memory address: " + address);
+        }
+        memory[address] = value;
+    }
+
 }

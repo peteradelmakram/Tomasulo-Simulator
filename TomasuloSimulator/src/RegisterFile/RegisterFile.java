@@ -134,6 +134,29 @@ public class RegisterFile {
         // Display the register file to verify preloaded values
         registerFile.displayRegisterFile();
     }
+
+
+
+    public void updateTagAndValue(String tag, Object value) {
+        // Update integer registers
+        for (Map.Entry<String, Register> entry : integerRegisters.entrySet()) {
+            Register reg = entry.getValue();
+            if (reg.getTag() != null && reg.getTag().equals(tag)) {
+                reg.setValue(value); // Set the new value
+                reg.setTag("0"); // Clear the tag (mark as available)
+            }
+        }
+
+        // Update floating-point registers
+        for (Map.Entry<String, Register> entry : floatingPointRegisters.entrySet()) {
+            Register reg = entry.getValue();
+            if (reg.getTag() != null && reg.getTag().equals(tag)) {
+                reg.setValue(value); // Set the new value
+                reg.setTag("0"); // Clear the tag (mark as available)
+            }
+        }
+    }
+
     
 
 }

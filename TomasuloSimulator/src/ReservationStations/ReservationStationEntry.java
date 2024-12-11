@@ -14,7 +14,51 @@ public class ReservationStationEntry {
     private int endExec; // Cycle we stop executing
     private Boolean isExecuting; // Flag to detect already executing instructions. 
     private int executionRemainingCycles; // track number of cycles needed to finish this instruction. (left most field in the table.)
+    private int issueCycle;
+    private boolean readyForWriteBack = false;
+    private int writeBackCycle = -1;
+
+ // Getter and Setter
+ public int getWriteBackCycle() {
+     return writeBackCycle;
+ }
+
+ public void setWriteBackCycle(int writeBackCycle) {
+     this.writeBackCycle = writeBackCycle;
+ }
+
     
+	public int getIssueCycle() {
+		return issueCycle;
+	}
+
+
+	public void setIssueCycle(int issueCycle) {
+		this.issueCycle = issueCycle;
+	}
+
+	public boolean isReadyForWriteBack() {
+	    return readyForWriteBack;
+	}
+
+	public void setReadyForWriteBack(boolean readyForWriteBack) {
+	    this.readyForWriteBack = readyForWriteBack;
+	}
+	// Constructor
+    public ReservationStationEntry(String tag, String op) {
+        this.tag = tag;
+        this.op = op;
+        this.Vj = null;
+        this.Vk = null;
+        this.Qj = null;
+        this.Qk = null;
+        this.busy = false;
+        this.isExecuting = false;
+        this.startExec = -1;
+        this.endExec = -1;
+        this.executionRemainingCycles = -1;
+    }
+
     
     public Boolean getIsExecuting() {
 		return isExecuting;
@@ -72,16 +116,6 @@ public class ReservationStationEntry {
 		Vk = vk;
 	}
 
-	// Constructor
-    public ReservationStationEntry(String tag, String op) {
-        this.tag = tag;
-        this.op = op;
-        this.Vj = null;
-        this.Vk = null;
-        this.Qj = null;
-        this.Qk = null;
-        this.busy = false;
-    }
 
     public void setTag(String tag) {
 		this.tag = tag;
@@ -145,12 +179,20 @@ public class ReservationStationEntry {
     }
 
     public void clear() {
+        this.busy = false;
+        this.op = null;
         this.Vj = null;
         this.Vk = null;
         this.Qj = null;
         this.Qk = null;
-        this.busy = false;
+        this.isExecuting = false;
+        this.startExec = -1;
+        this.endExec = -1;
+        this.executionRemainingCycles = 0;
+        this.readyForWriteBack = false;
+        this.writeBackCycle = -1;
     }
+
     
     public void decrementExecutionRemainingCycles() {
         if (executionRemainingCycles > 0) {

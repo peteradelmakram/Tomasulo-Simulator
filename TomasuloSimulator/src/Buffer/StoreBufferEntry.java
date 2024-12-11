@@ -13,14 +13,31 @@ public class StoreBufferEntry {
     private int executionRemainingCycles;
     private Boolean isExecuting; 
     Instruction instruction;
+    private int issueCycle;
 
-    // Constructor
+    public int getIssueCycle() {
+		return issueCycle;
+	}
+
+
+
+	public void setIssueCycle(int issueCycle) {
+		this.issueCycle = issueCycle;
+	}
+
+
+
+	// Constructor
     public StoreBufferEntry(String tag, String address) {
         this.tag = tag;
         this.address = address;
         this.value = null; // Initially no value is available
         this.Q = null;     // Initially no instruction is producing the value
         this.busy = false;
+        this.isExecuting = false;
+        this.startExecutionCycle = -1;
+        this.endExecutionCycle = -1;
+        this.executionRemainingCycles = -1;
     }
     
     
@@ -115,4 +132,14 @@ public class StoreBufferEntry {
     public void clear() {
         this.busy = false;
     }
+
+
+
+	public void decrementExecutionRemainingCycles() {
+		if(executionRemainingCycles > 0) {
+			executionRemainingCycles--;
+		}
+	}
+    
+    
 }

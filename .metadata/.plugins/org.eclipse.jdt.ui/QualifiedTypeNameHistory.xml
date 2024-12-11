@@ -1,2 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<qualifiedTypeNameHistroy/>
+<qualifiedTypeNameHistroy>
+    <fullyQualifiedTypeName name="InstructionParser.InstructionParser"/>
+    <fullyQualifiedTypeName name="RegisterFile.RegisterFile"/>
+    <fullyQualifiedTypeName name="ReservationStations.ReservationStationEntry"/>
+    <fullyQualifiedTypeName name="Buffer.StoreBuffer"/>
+    <fullyQualifiedTypeName name="Buffer.LoadBuffer"/>
+    <fullyQualifiedTypeName name="java.nio.Buffer"/>
+    <fullyQualifiedTypeName name="Buffer.BufferManager"/>
+    <fullyQualifiedTypeName name="Buffer.LoadBufferEntry"/>
+    <fullyQualifiedTypeName name="Buffer.StoreBufferEntry"/>
+    <fullyQualifiedTypeName name="java.util.Queue"/>
+    <fullyQualifiedTypeName name="java.util.List"/>
+    <fullyQualifiedTypeName name="Instruction.Instruction"/>
+    <fullyQualifiedTypeName name="ExecutionTable.ExecutionTableEntry"/>
+</qualifiedTypeNameHistroy>

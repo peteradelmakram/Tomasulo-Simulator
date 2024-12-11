@@ -6,8 +6,8 @@ public class BufferManager {
     private LoadBuffer loadBuffer;
     private StoreBuffer storeBuffer;
 
-    public BufferManager(int loadSize, int storeSize) {
-        this.loadBuffer = new LoadBuffer(loadSize);
+    public BufferManager(int loadSize, int storeSize, int missLatency) {
+        this.loadBuffer = new LoadBuffer(loadSize, missLatency);
         this.storeBuffer = new StoreBuffer(storeSize);
     }
 

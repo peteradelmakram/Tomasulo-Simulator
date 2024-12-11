@@ -86,4 +86,32 @@ public class ReservationStationManager {
         }
         return allStations;
     }
+
+    public void updateAfterWriteBack(String tag, Object value) {
+        // Update Addition/Subtraction Reservation Station
+        for (ReservationStationEntry entry : addSubtractRS.getStations()) {
+            if (entry.getQj() != null && entry.getQj().equals(tag)) {
+                entry.setVj(value);
+                entry.setQj(null); // Clear dependency
+            }
+            if (entry.getQk() != null && entry.getQk().equals(tag)) {
+                entry.setVk(value);
+                entry.setQk(null); // Clear dependency
+            }
+        }
+
+        // Update Multiplication/Division Reservation Station
+        for (ReservationStationEntry entry : multiplyDivideRS.getStations()) {
+            if (entry.getQj() != null && entry.getQj().equals(tag)) {
+                entry.setVj(value);
+                entry.setQj(null); // Clear dependency
+            }
+            if (entry.getQk() != null && entry.getQk().equals(tag)) {
+                entry.setVk(value);
+                entry.setQk(null); // Clear dependency
+            }
+        }
+    }
+
+	
 }

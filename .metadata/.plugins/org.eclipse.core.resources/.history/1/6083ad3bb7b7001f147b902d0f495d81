@@ -1,0 +1,63 @@
+package TomasuloSimulator;
+
+import java.util.Queue;
+
+import Instruction.Instruction;
+
+public class Main {
+    public static void main(String[] args) {
+    	 TomasuloSimulator simulator = new TomasuloSimulator(
+    	            16, // Number of integer registers
+    	            16, // Number of floating-point registers
+    	            4,  // Cache block size
+    	            3,  // Add/Subtract reservation station size
+    	            2,  // Multiply/Divide reservation station size
+    	            2,  // Add latency
+    	            2,  // Subtract latency
+    	            10, // Multiply latency
+    	            20, // Divide latency
+    	            5,  // Cache miss latency
+    	            2,  // Load latency
+    	            2,  // Store latency
+    	            3,  // Load buffer size
+    	            3   // Store buffer size
+    	        );
+    	 
+    	for(int i = 0; i < 6; i++) {
+    		 System.out.println("\nIssuing Instruction...");
+    	        boolean issued = simulator.issueInstructions();
+    	        printState(simulator);
+
+    	        // Print results
+    	        if (issued) {
+    	            System.out.println("\nInstruction Issued:");
+    	        } else {
+    	            System.out.println("\nNo instruction issued (queue might be empty or no available slots).");
+    	        }
+    	}
+        
+
+    	 
+        // Run one instruction issue cycle
+       
+
+        // Print the state after issuing
+    }
+
+    private static void printState(TomasuloSimulator simulator) {
+        System.out.println("\nReservation Stations:");
+        // You may need a method in ReservationStationManager to print its state
+        simulator.getReservationStations().printState(); 
+
+        System.out.println("\nLoad Buffers:");
+        simulator.getBuffers().getLoadBuffers().printState();
+
+        System.out.println("\nStore Buffers:");
+        simulator.getBuffers().getStoreBuffers().printState();
+
+        System.out.println("\nRegister File:");
+        simulator.getRegisterFile().printState();
+    }
+
+}
+

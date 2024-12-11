@@ -47,4 +47,14 @@ public class ExecutionTableEntry {
 
     public int getWriteBackCycle() { return writeBackCycle; }
     public void setWriteBackCycle(int writeBackCycle) { this.writeBackCycle = writeBackCycle; }
+    public String toString() {
+        return "Instruction: " + instruction.getOperation() + ", " +
+               "Destination: " + destination + ", " +
+               "Source1: " + source1 + ", " +
+               "Source2: " + source2 + ", " +
+               "IssueCycle: " + issueCycle + ", " +
+               "StartExecutionCycle: " + startExecutionCycle + ", " +
+               "EndExecutionCycle: " + endExecutionCycle + ", " +
+               "WriteBackCycle: " + writeBackCycle;
+    }
 }

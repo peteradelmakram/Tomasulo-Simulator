@@ -11,14 +11,77 @@ public class LoadBufferEntry {
     private int executionRemainingCycles;
     private Boolean isExecuting; 
     Instruction instruction;
-    
+    private Object loadedValue; // Store the loaded value
+    private boolean readyForWriteBack;
+    private boolean stallCyclesResolved;
+    private int issueCycle;
 
-	// Constructor
-    public LoadBufferEntry(String tag, String address) {
+    public int getIssueCycle() {
+		return issueCycle;
+	}
+
+
+
+	public void setIssueCycle(int issueCycle) {
+		this.issueCycle = issueCycle;
+	}
+
+ // Constructor
+    public LoadBufferEntry(String tag, String address, int stallCycles ) {
         this.tag = tag;
         this.address = address;
         this.busy = false;
+        this.isExecuting = false;
+        this.startExecutionCycle = -1;
+        this.endExecutionCycle = -1;
+        this.executionRemainingCycles = -1;
+        this.loadedValue = null;
+        this.readyForWriteBack = false;
+        this.stallCycles = stallCycles;
     }
+    
+    public Boolean getIsExecuting() {
+		return isExecuting;
+	}
+
+
+	public void setIsExecuting(Boolean isExecuting) {
+		this.isExecuting = isExecuting;
+	}
+
+
+	public Object getLoadedValue() {
+		return loadedValue;
+	}
+
+
+	public void setLoadedValue(Object loadedValue) {
+		this.loadedValue = loadedValue;
+	}
+
+
+	public boolean isReadyForWriteBack() {
+		return readyForWriteBack;
+	}
+
+
+	public void setReadyForWriteBack(boolean readyForWriteBack) {
+		this.readyForWriteBack = readyForWriteBack;
+	}
+
+
+	public int getStallCycles() {
+		return stallCycles;
+	}
+
+
+	public void setStallCycles(int stallCycles) {
+		this.stallCycles = stallCycles;
+	}
+
+	private int stallCycles; // Tracks stall cycles due to cache miss or delays
+
+	
 
 
 	public Instruction getInstruction() {
@@ -95,5 +158,17 @@ public class LoadBufferEntry {
 		  if (executionRemainingCycles > 0) {
 	            executionRemainingCycles--;
 	        }		
+	}
+	
+	public void incrementStallCycles() {
+		this.stallCycles++;
+	}
+
+	public void setStallCyclesResolved(boolean b) {
+		this.stallCyclesResolved = b;
+	}
+
+	public boolean isStallCyclesResolved() {
+		return stallCyclesResolved;
 	}
 }

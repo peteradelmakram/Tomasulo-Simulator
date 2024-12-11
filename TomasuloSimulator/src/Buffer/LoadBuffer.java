@@ -6,11 +6,11 @@ public class LoadBuffer {
     private LoadBufferEntry[] buffer;
     private int currentTag;
 
-    public LoadBuffer(int size) {
+    public LoadBuffer(int size, int missLatency) {
         buffer = new LoadBufferEntry[size];
         currentTag = 0;
         for (int i = 0; i < size; i++) {
-            buffer[i] = new LoadBufferEntry(generateTag(), "");
+            buffer[i] = new LoadBufferEntry(generateTag(), "", missLatency);
         }
     }
 
@@ -72,5 +72,13 @@ public class LoadBuffer {
             }
         }
     }
-    
+
+    public void updateAfterWriteBack(String tag, Object value) {
+        for (LoadBufferEntry entry : buffer) {
+            if (entry.isBusy() && entry.getAddress() != null && entry.getAddress().equals(tag)) {
+                entry.setAddress(value.toString()); // Replace the tag with the actual address
+            }
+        }
+    }
+
 }

@@ -334,4 +334,129 @@ public class Cache {
     	    System.out.println("The value from the cache is: " );
         
     }
+    
+    private byte[] intToBytes(int value) {
+        return new byte[] {
+            (byte) (value),
+            (byte) (value >> 8),
+            (byte) (value >> 16),
+            (byte) (value >> 24)
+        };
+    }
+
+    private byte[] longToBytes(long value) {
+        return new byte[] {
+            (byte) (value),
+            (byte) (value >> 8),
+            (byte) (value >> 16),
+            (byte) (value >> 24),
+            (byte) (value >> 32),
+            (byte) (value >> 40),
+            (byte) (value >> 48),
+            (byte) (value >> 56)
+        };
+    }
+
+    public void storeWord(int address, Integer value) {
+        int blockNumber = (address / blockSize) % cache.length;
+        int tag = address / blockSize;
+
+        CacheBlock block = cache[blockNumber];
+
+        if (!block.valid || block.tag != tag) {
+            // Cache miss: Load the block from memory
+            loadWord(address);
+        }
+
+        // Write the word into the cache
+        int offset = getOffset(address);
+        byte[] valueBytes = intToBytes(value);
+
+        for (int i = 0; i < 4; i++) {
+            block.data[offset + i] = valueBytes[i];
+        }
+
+        // Write-through: Update main memory
+        for (int i = 0; i < 4; i++) {
+            memory.writeByte(address + i, valueBytes[i]);
+        }
+    }
+
+    public void storeDoubleWord(int address, Long value) {
+        int blockNumber = (address / blockSize) % cache.length;
+        int tag = address / blockSize;
+
+        CacheBlock block = cache[blockNumber];
+
+        if (!block.valid || block.tag != tag) {
+            // Cache miss: Load the block from memory
+            loadDoubleWord(address);
+        }
+
+        // Write the double word into the cache
+        int offset = getOffset(address);
+        byte[] valueBytes = longToBytes(value);
+
+        for (int i = 0; i < 8; i++) {
+            block.data[offset + i] = valueBytes[i];
+        }
+
+        // Write-through: Update main memory
+        for (int i = 0; i < 8; i++) {
+            memory.writeByte(address + i, valueBytes[i]);
+        }
+    }
+
+    public void storeSingleFloat(int address, Float value) {
+        int blockNumber = (address / blockSize) % cache.length;
+        int tag = address / blockSize;
+
+        CacheBlock block = cache[blockNumber];
+
+        if (!block.valid || block.tag != tag) {
+            // Cache miss: Load the block from memory
+            loadSingleFloat(address);
+        }
+
+        // Write the single float into the cache
+        int offset = getOffset(address);
+        byte[] valueBytes = intToBytes(Float.floatToIntBits(value));
+
+        for (int i = 0; i < 4; i++) {
+            block.data[offset + i] = valueBytes[i];
+        }
+
+        // Write-through: Update main memory
+        for (int i = 0; i < 4; i++) {
+            memory.writeByte(address + i, valueBytes[i]);
+        }
+    }
+
+    public void storeDoubleFloat(int address, Double value) {
+        int blockNumber = (address / blockSize) % cache.length;
+        int tag = address / blockSize;
+
+        CacheBlock block = cache[blockNumber];
+
+        if (!block.valid || block.tag != tag) {
+            // Cache miss: Load the block from memory
+            loadDoubleFloat(address);
+        }
+
+        // Write the double float into the cache
+        int offset = getOffset(address);
+        byte[] valueBytes = longToBytes(Double.doubleToLongBits(value));
+
+        for (int i = 0; i < 8; i++) {
+            block.data[offset + i] = valueBytes[i];
+        }
+
+        // Write-through: Update main memory
+        for (int i = 0; i < 8; i++) {
+            memory.writeByte(address + i, valueBytes[i]);
+        }
+    }
+    
+
+
 }

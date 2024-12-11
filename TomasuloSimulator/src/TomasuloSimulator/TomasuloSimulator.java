@@ -16,6 +16,7 @@ import Buffer.BufferManager;
 import Buffer.LoadBufferEntry;
 import Buffer.StoreBufferEntry;
 import ExecutionTable.ExecutionTableEntry;
+import java.util.ArrayList;
 
 public class TomasuloSimulator {
 	
@@ -77,7 +78,8 @@ public class TomasuloSimulator {
         this.cacheMissLatency = cacheMissLatency;
         this.loadLatency = loadLatency;
         this.storeLatency = storeLatency;
-        this.buffers = new BufferManager(loadBufferSize, storeBufferSize);
+        this.buffers = new BufferManager(loadBufferSize, storeBufferSize, cacheMissLatency);
+        this.executionTable = new ArrayList<ExecutionTableEntry>();
     }
 
     public RegisterFile getRegisterFile() {
@@ -224,7 +226,8 @@ public class TomasuloSimulator {
      	   Station.setQk(TagK);
      	   
         }
-        
+        Station.setIssueCycle(clockCycle);
+        Station.setInstruction(instruction);
         registerFile.setRegisterTag(destination, Station.getTag());
     }
     
@@ -259,6 +262,8 @@ public class TomasuloSimulator {
     		}
     	}
     	
+    	buffer.setInstruction(instruction);
+    	buffer.setIssueCycle(clockCycle);
     	registerFile.setRegisterTag(destination, buffer.getTag());
     	
     	
@@ -294,23 +299,25 @@ public class TomasuloSimulator {
     	}else {
     		String dstTag = registerFile.getRegisterTag(destinationAddr);
     		if(dstTag.equals("0")) {
-    			buffer.setAddress((String) registerFile.getRegisterValue(destinationAddr));
+    			buffer.setAddress( registerFile.getRegisterValue(destinationAddr) + "");
     		}else {
     			buffer.setAddress(registerFile.getRegisterTag(destinationAddr));
     		}
     		
     	}
+    	buffer.setIssueCycle(clockCycle);
+    	buffer.setInstruction(instruction);
+
     }
     
     // Method to issue instructions from the instruction queue
     public boolean issueInstructions() {
  	   boolean issued = false;
-
         // Try to issue the next instruction in the queue
         if (!instructionQueue.isEmpty()) {
             Instruction instruction = instructionQueue.peek();
-            
-            System.out.println(instruction.getOperation());
+      	   System.out.println("Issuing instruction : " + instruction.getOperation());
+
             
             // Either an addition or multiplication station to store in reservation station.
             if(reservationStations.isAddSubOperation(instruction) || reservationStations.isMulDivOperation(instruction)) {
@@ -364,72 +371,313 @@ public class TomasuloSimulator {
         return false;
     }
     
-    
-   
-    
     public void executeInstructions() {
-    	// Biko , this how the execution should work, you should iterate on the reservation stations, 
-    	// if you find a reservation station with both valid Vj & Vk, and busy bits, then you should start
-    	// execution. Same should happen for the load buffers, and the store buffers. 
-    	// Then, we need another method to handle the specific execution (Functional unit)
-    	// so, we execute the method ExecuteInstructions() , it sets the setExecuting boolean to true, 
-    	// then we need to call another method FunctionalUnitExecution(), this one should look for reservation,
-    	// stations with executing == true. If executing == true, then using the opcode in the reservation station,
-    	// you should get the Vj, and Vk, and calculate the result. However, even though you calculate the result, 
-    	// The result should technically be invalid until currentClockCycle == (startClockCycle + Latency), 
-    	// After which we should start implementing the Write Back stage. 
-    	// We'll write back in FIFO order, but we'll check if we have two instructions with ready output, 
-    	// then we have to check the FIFO order, then check if one of the results they want to write back is needed by
-    	// either any reservation station, load buffer, store buffer, or the register file. If one of them is needed and another isn't, we should write back the one that's needed.
+        // Process reservation stations
+        for (ReservationStationEntry station : reservationStations.getAllStations()) {
+            if (station.isBusy() && station.getVj() != null && station.getVk() != null) {
+                if (!station.isExecuting() && station.getIssueCycle() < clockCycle) {
+                    // Start execution one cycle after issuing
+                    station.setExecuting(true);
+                    station.setExecutionRemainingCycles(getLatency(station.getOp()));
+
+                    ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
+                    entry.setStartExecutionCycle(clockCycle);
+                } else if (station.isExecuting()) {
+                    station.decrementExecutionRemainingCycles();
+
+                    if (station.getExecutionRemainingCycles() == 0) {
+                        // Execution completed, prepare for write-back
+                        station.setExecuting(false);
+                        station.setReadyForWriteBack(true);
+
+                        ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
+                        entry.setEndExecutionCycle(clockCycle);
+                        station.setEndExec(clockCycle);
+                    }
+                }
+            }
+        }
+
+        // Process load buffers
+        for (LoadBufferEntry loadBuffer : buffers.getLoadBuffers().getBuffer()) {
+            if (loadBuffer.isBusy() && loadBuffer.getAddress() != null && loadBuffer.getAddress().matches("\\d+")) {
+                int address = Integer.parseInt(loadBuffer.getAddress());
+                ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
+
+                if (!loadBuffer.isExecuting() && loadBuffer.getIssueCycle() < clockCycle - 1) {
+                    // Start load execution one cycle after issuing
+                    loadBuffer.setExecuting(true);
+                    loadBuffer.setExecutionRemainingCycles(loadLatency);
+                    loadBuffer.setStallCyclesResolved(false);
+                    entry.setStartExecutionCycle(clockCycle);
+                }
+
+                if (loadBuffer.isExecuting()) {
+                    if (!loadBuffer.isStallCyclesResolved()) {
+                        // Account for stall cycles during the first load
+                        if (clockCycle - entry.getStartExecutionCycle() >= cacheMissLatency) {
+                            loadBuffer.setStallCyclesResolved(true);
+                        }
+                    } else {
+                        loadBuffer.decrementExecutionRemainingCycles();
+
+                        if (loadBuffer.getExecutionRemainingCycles() == 0) {
+                            // Load from cache
+                            String operation = loadBuffer.getInstruction().getOperation();
+                            Object loadedValue;
+
+                            switch (operation) {
+                                case "LW":
+                                    loadedValue = dataCache.getWord(address);
+                                    break;
+                                case "LD":
+                                    loadedValue = dataCache.getLong(address);
+                                    break;
+                                case "L.S":
+                                    loadedValue = dataCache.getSingleFloat(address);
+                                    break;
+                                case "L.D":
+                                    loadedValue = dataCache.getDoubleFloat(address);
+                                    break;
+                                default:
+                                    throw new IllegalArgumentException("Unsupported load operation: " + operation);
+                            }
+
+                            // Store the loaded value
+                            loadBuffer.setLoadedValue(loadedValue);
+                            loadBuffer.setReadyForWriteBack(true);
+                            loadBuffer.clear();
+
+                            entry.setEndExecutionCycle(clockCycle);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Process store buffers
+        for (StoreBufferEntry storeBuffer : buffers.getStoreBuffers().getBuffer()) {
+            if (storeBuffer.isBusy() && storeBuffer.getAddress() != null) {
+                ExecutionTableEntry entry = findExecutionTableEntry(storeBuffer.getInstruction());
+
+                if (!storeBuffer.isExecuting() && storeBuffer.getIssueCycle() < clockCycle - 1) {
+                    // Start store execution one cycle after issuing
+                    storeBuffer.setExecuting(true);
+                    storeBuffer.setExecutionRemainingCycles(storeLatency);
+                    entry.setStartExecutionCycle(clockCycle);
+                } else if (storeBuffer.isExecuting() && storeBuffer.getValue() != null) {
+                    storeBuffer.decrementExecutionRemainingCycles();
+
+                    if (storeBuffer.getExecutionRemainingCycles() == 0) {
+                        // Store the value into the cache
+                        int address = Integer.parseInt(storeBuffer.getAddress());
+                        Object value = storeBuffer.getValue();
+
+                        if (value instanceof Integer) {
+                            dataCache.storeWord(address, (Integer) value);
+                        } else if (value instanceof Long) {
+                            dataCache.storeDoubleWord(address, (Long) value);
+                        } else if (value instanceof Float) {
+                            dataCache.storeSingleFloat(address, (Float) value);
+                        } else if (value instanceof Double) {
+                            dataCache.storeDoubleFloat(address, (Double) value);
+                        } else {
+                            throw new IllegalArgumentException("Unsupported value type for store: " + value);
+                        }
+
+                        storeBuffer.clear();
+                        entry.setEndExecutionCycle(clockCycle);
+                    }
+                }
+            }
+        }
+    }
+
+    
+    public void writeBack() {
+    	for (ReservationStationEntry station : reservationStations.getAllStations()) {
+    	    if (station.isBusy() && station.isReadyForWriteBack() && station.getEndExec() < clockCycle) {
+    	        // Write-back is allowed only one cycle after execution ends
+    	        Object result = calculateResult(station);
+
+    	        // Propagate the result to dependent components
+    	        String tag = station.getTag();
+    	        updateDependents(tag, result);
+
+    	        // Clear the reservation station
+    	        station.clear();
+
+    	        // Update the execution table
+    	        ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
+    	        entry.setWriteBackCycle(clockCycle);
+
+    	        // Only one instruction can write back per cycle
+    	        break;
+    	    } else if (station.isBusy() && station.isReadyForWriteBack() && station.getWriteBackCycle() == -1) {
+    	        // Set the write-back cycle for the instruction
+    	        station.setWriteBackCycle(clockCycle);
+    	    }
+    	}
+    	 // Process load buffers
+        for (LoadBufferEntry loadBuffer : buffers.getLoadBuffers().getBuffer()) {
+            if (loadBuffer.isReadyForWriteBack()) {
+                // Write back the loaded value to the register file
+                String tag = loadBuffer.getTag();
+                Object loadedValue = loadBuffer.getLoadedValue();
+                updateDependents(tag, loadedValue);
+
+                loadBuffer.clear();
+
+                ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
+                entry.setWriteBackCycle(clockCycle);
+                loadBuffer.setReadyForWriteBack(false);
+                // Only one instruction can write back per cycle
+                break;
+            }
+        }
     	
-    	
-//        for (ReservationStationEntry station : reservationStations.getAllStations()) {
-//            if (station.isBusy() && station.getVj() != null && station.getVk() != null) {
-//                if (!station.isExecuting()) {
-//                    // Start execution
-//                    station.setExecuting(true);
-//                    station.setExecutionRemainingCycles(getLatency(station.getOp()));
+
+    	    
+
+//        for (LoadBufferEntry loadBuffer : buffers.getLoadBuffers().getBuffer()) {
+//            // Check if the load buffer entry is ready for write-back
+//            if (loadBuffer.isBusy() && loadBuffer.getExecutionRemainingCycles() == 0) {
+//                // The result is the value loaded from memory
+//                Object result = loadBuffer.getLoadedValue();
 //
-//                    // Update execution table
-//                    ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
-//                    entry.setStartExecutionCycle(clockCycle);
-//                } else {
-//                    station.decrementExecutionRemainingCycles();
-//                    if (station.getExecutionRemainingCycles() == 0) {
-//                        // Execution complete
-//                        station.clear();
+//                // Propagate the result to dependent components
+//                String tag = loadBuffer.getTag();
+//                updateDependents(tag, result);
 //
-//                        // Update execution table
-//                        ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
-//                        entry.setEndExecutionCycle(clockCycle);
-//                    }
-//                }
+//                // Mark the buffer as cleared
+//                loadBuffer.clear();
+//
+//                // Update the execution table
+//                ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
+//                entry.setWriteBackCycle(clockCycle);
+//
+//                // Only one instruction can write back per cycle
+//                break;
 //            }
 //        }
-        
-        
-        
     }
     
 
+    private Object calculateResult(ReservationStationEntry station) {
+        Object Vj = station.getVj();
+        Object Vk = station.getVk();
+        String operation = station.getOp();
 
+        // Convert Vj to numeric value
+        double numericVj = (Vj instanceof String) ? Double.parseDouble((String) Vj) : ((Number) Vj).doubleValue();
+        // Convert Vk to numeric value
+        double numericVk = (Vk instanceof String) ? Double.parseDouble((String) Vk) : ((Number) Vk).doubleValue();
+
+        switch (operation) {
+            case "ADD":
+            case "DADDI":
+                return (int) numericVj + (int) numericVk;
+
+            case "ADD.D":
+                return numericVj + numericVk;
+            case "ADD.S":
+                return (float) numericVj + (float) numericVk;
+
+            case "SUB":
+            case "DSUBI":
+                return (int) numericVj - (int) numericVk;
+
+            case "SUB.D":
+                return numericVj - numericVk;
+            case "SUB.S":
+                return (float) numericVj - (float) numericVk;
+
+            case "MUL.S":
+                return (float) numericVj * (float) numericVk;
+            case "MUL.D":
+                return numericVj * numericVk;
+
+            case "DIV.D":
+                return numericVj / numericVk;
+            case "DIV.S":
+                return (float) numericVj / (float) numericVk;
+
+            default:
+                throw new IllegalArgumentException("Unsupported operation: " + operation);
+        }
+    }
+
+
+    private void updateDependents(String tag, Object value) {
+        // Update register file
+        registerFile.updateTagAndValue(tag, value);
+
+        // Update reservation stations
+        reservationStations.updateAfterWriteBack(tag, value);
+
+        // Update load buffers
+        buffers.getLoadBuffers().updateAfterWriteBack(tag, value);
+
+        // Update store buffers
+        buffers.getStoreBuffers().updateAfterWriteBack(tag, value);
+    }
+
+    private  void printStatus() {
+    	System.out.println("Clock Cycle : " + clockCycle + "---------------------------------------------------------------------------------");
+        System.out.println("\nReservation Stations:");
+        // You may need a method in ReservationStationManager to print its state
+        getReservationStations().printState(); 
+
+        System.out.println("\nLoad Buffers:");
+        getBuffers().getLoadBuffers().printState();
+
+        System.out.println("\nStore Buffers:");
+        getBuffers().getStoreBuffers().printState();
+
+        System.out.println("\nRegister File:");
+        getRegisterFile().printState();
+        
+        
+        System.out.println("\nExecution Table:");
+        for (ExecutionTable.ExecutionTableEntry entry : getExecutionTable()) {
+            System.out.println(entry);
+        }
+        
+        System.out.println("----------------------------------------------------------------------------------------");
+    }
+ 
     
     // Simulate Tomasulo's algorithm execution
     public void runSimulator() {
-        while (true) {
+      while(!instructionQueue.isEmpty() || hasPendingWriteBacks()) {
             clockCycle++;
-            boolean issued = false;
 
             // Step 1: Issue instructions from the queue to the reservation stations
-            issued = issueInstructions();
+            issueInstructions();
 
-         
+            // Step 2: Execute instructions in reservation stations and buffers
+            executeInstructions();
 
-            // Optionally, you can print the current cycle status here for debugging
-            // printStatus();
+            // Step 3: Write back results to the register file and clear reservation stations
+            writeBack();
+
+            // Optionally, print the current cycle status for debugging
+            printStatus();
         }
     }
-    
-  
+
+    // Helper method to check if there are instructions still pending write-back
+    private boolean hasPendingWriteBacks() {
+        for (ExecutionTableEntry entry : executionTable) {
+            if (entry.getWriteBackCycle() < 0) {
+                return true; // There is at least one instruction pending write-back
+            }
+        }
+        return false; // All instructions have completed write-back
+    }
+
+	public List<ExecutionTableEntry> getExecutionTable() {
+		return executionTable;
+	}
 }
 

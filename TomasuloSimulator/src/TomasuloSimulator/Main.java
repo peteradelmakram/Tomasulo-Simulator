@@ -2,6 +2,7 @@ package TomasuloSimulator;
 
 import java.util.Queue;
 
+import ExecutionTable.ExecutionTableEntry;
 import Instruction.Instruction;
 
 public class Main {
@@ -14,8 +15,8 @@ public class Main {
     	            2,  // Multiply/Divide reservation station size
     	            2,  // Add latency
     	            2,  // Subtract latency
-    	            10, // Multiply latency
-    	            20, // Divide latency
+    	            4, // Multiply latency
+    	            5, // Divide latency
     	            5,  // Cache miss latency
     	            2,  // Load latency
     	            2,  // Store latency
@@ -23,18 +24,7 @@ public class Main {
     	            3   // Store buffer size
     	        );
     	 
-    	for(int i = 0; i < 6; i++) {
-    		 System.out.println("\nIssuing Instruction...");
-    	        boolean issued = simulator.issueInstructions();
-    	        printState(simulator);
-
-    	        // Print results
-    	        if (issued) {
-    	            System.out.println("\nInstruction Issued:");
-    	        } else {
-    	            System.out.println("\nNo instruction issued (queue might be empty or no available slots).");
-    	        }
-    	}
+    	 	simulator.runSimulator();
         
 
     	 
@@ -44,20 +34,26 @@ public class Main {
         // Print the state after issuing
     }
 
-    private static void printState(TomasuloSimulator simulator) {
-        System.out.println("\nReservation Stations:");
-        // You may need a method in ReservationStationManager to print its state
-        simulator.getReservationStations().printState(); 
-
-        System.out.println("\nLoad Buffers:");
-        simulator.getBuffers().getLoadBuffers().printState();
-
-        System.out.println("\nStore Buffers:");
-        simulator.getBuffers().getStoreBuffers().printState();
-
-        System.out.println("\nRegister File:");
-        simulator.getRegisterFile().printState();
-    }
+//    private static void printState(TomasuloSimulator simulator) {
+//        System.out.println("\nReservation Stations:");
+//        // You may need a method in ReservationStationManager to print its state
+//        simulator.getReservationStations().printState(); 
+//
+//        System.out.println("\nLoad Buffers:");
+//        simulator.getBuffers().getLoadBuffers().printState();
+//
+//        System.out.println("\nStore Buffers:");
+//        simulator.getBuffers().getStoreBuffers().printState();
+//
+//        System.out.println("\nRegister File:");
+//        simulator.getRegisterFile().printState();
+//        
+//        
+//        System.out.println("\nExecution Table:");
+//        for (ExecutionTable.ExecutionTableEntry entry : simulator.getExecutionTable()) {
+//            System.out.println(entry);
+//        }
+//    }
 
 }
 
