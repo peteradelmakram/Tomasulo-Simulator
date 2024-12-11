@@ -6,26 +6,30 @@
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
-		<item key="selection" value="System.out.println"/>
+		<item key="selection" value="loadBuffer.clear"/>
 		<list key="findhistory">
+			<item value="loadBuffer.clear"/>
+			<item value="cacheMissLatency"/>
+			<item value="entry.setStartCycle"/>
+			<item value="station.clear()"/>
+			<item value="entry.setEndExecutionCycle"/>
+			<item value="setEndExecutionCycle"/>
+			<item value="setStartExecutionCycle"/>
+			<item value="clock"/>
+			<item value="loadBuffer.isExecuting"/>
+			<item value="setEndExec"/>
+			<item value="s"/>
+			<item value="loadBuffer"/>
+			<item value="readByte"/>
 			<item value="system.out.println"/>
 			<item value="isAdd"/>
-			<item value="Address Stored "/>
-			<item value="Address"/>
-			<item value="findExecutionTableEntry"/>
-			<item value="new ExecutionTableEntry"/>
-			<item value="poll"/>
-			<item value="System.out.println"/>
-			<item value="access"/>
-			<item value="Valid : true"/>
-			<item value="Tag"/>
 		</list>
 		<list key="replacehistory">
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item key="DIALOG_X_ORIGIN" value="829"/>
-		<item key="DIALOG_Y_ORIGIN" value="96"/>
+		<item key="DIALOG_X_ORIGIN" value="916"/>
+		<item key="DIALOG_Y_ORIGIN" value="101"/>
 		<item key="DIALOG_WIDTH" value="322"/>
 		<item key="DIALOG_HEIGHT" value="391"/>
 		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>

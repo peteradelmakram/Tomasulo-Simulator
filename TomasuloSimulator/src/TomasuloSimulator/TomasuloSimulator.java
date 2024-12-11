@@ -38,7 +38,7 @@ public class TomasuloSimulator {
     private InstructionParser parser;
     private BufferManager buffers;
     private List<ExecutionTableEntry> executionTable;
-
+    private Boolean isFirstMemAccess;
     
 
     // Constructor to initialize all components of the simulator
@@ -80,6 +80,7 @@ public class TomasuloSimulator {
         this.storeLatency = storeLatency;
         this.buffers = new BufferManager(loadBufferSize, storeBufferSize, cacheMissLatency);
         this.executionTable = new ArrayList<ExecutionTableEntry>();
+        this.isFirstMemAccess = true;
     }
 
     public RegisterFile getRegisterFile() {
@@ -292,6 +293,7 @@ public class TomasuloSimulator {
     	}else {
     		buffer.setBusy(true);
     		buffer.setQ(Tag);
+    		buffer.setAddress(null);
     	}
     	
     	if(isDirectMapped) {
@@ -360,6 +362,8 @@ public class TomasuloSimulator {
                     executionTable.add(entry);
                     issued = true;
 
+            	}else {
+            		issued = false;
             	}
             	
             	
@@ -404,6 +408,7 @@ public class TomasuloSimulator {
 
         // Process load buffers
         for (LoadBufferEntry loadBuffer : buffers.getLoadBuffers().getBuffer()) {
+        	
             if (loadBuffer.isBusy() && loadBuffer.getAddress() != null && loadBuffer.getAddress().matches("\\d+")) {
                 int address = Integer.parseInt(loadBuffer.getAddress());
                 ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
@@ -411,53 +416,55 @@ public class TomasuloSimulator {
                 if (!loadBuffer.isExecuting() && loadBuffer.getIssueCycle() < clockCycle && !loadBuffer.isReadyForWriteBack()) {
                     // Start load execution one cycle after issuing
                     loadBuffer.setExecuting(true);
-                    loadBuffer.setExecutionRemainingCycles(loadLatency);
+                    
+                    if(isFirstMemAccess) {
+                        loadBuffer.setExecutionRemainingCycles(loadLatency + cacheMissLatency);
+                    }else {
+                    	loadBuffer.setExecutionRemainingCycles(loadLatency);
+                    }
+                    
                     loadBuffer.setStallCyclesResolved(false);
                     entry.setStartExecutionCycle(clockCycle);
                 }
-
                 if (loadBuffer.isExecuting()) {
-                    if (!loadBuffer.isStallCyclesResolved()) {
-                        if (clockCycle - entry.getStartExecutionCycle() >= cacheMissLatency) {
-                            loadBuffer.setStallCyclesResolved(true);
-                        }
-                    } else {
-                        loadBuffer.decrementExecutionRemainingCycles();
+                    loadBuffer.decrementExecutionRemainingCycles();
 
-                        if (loadBuffer.getExecutionRemainingCycles() == 0) {
-                            // Load from cache
-                            String operation = loadBuffer.getInstruction().getOperation();
-                            Object loadedValue;
+                    if (loadBuffer.getExecutionRemainingCycles() == 0) {
+                        // Load from cache
+                        String operation = loadBuffer.getInstruction().getOperation();
+                        Object loadedValue;
 
-                            switch (operation) {
-                                case "LW":
-                                    loadedValue = dataCache.getWord(address);
-                                    break;
-                                case "LD":
-                                    loadedValue = dataCache.getLong(address);
-                                    break;
-                                case "L.S":
-                                    loadedValue = dataCache.getSingleFloat(address);
-                                    break;
-                                case "L.D":
-                                    loadedValue = dataCache.getDoubleFloat(address);
-                                    break;
-                                default:
-                                    throw new IllegalArgumentException("Unsupported load operation: " + operation);
-                            }
-                            
-                            // Store the loaded value
-                            loadBuffer.setLoadedValue(loadedValue);
-                            loadBuffer.setReadyForWriteBack(true);
-                            loadBuffer.setEndExecutionCycle(clockCycle);
-                            entry.setEndExecutionCycle(clockCycle);
-                            loadBuffer.setIsExecuting(false);
+                        switch (operation) {
+                            case "LW":
+                                loadedValue = dataCache.getWord(address);
+                                break;
+                            case "LD":
+                                loadedValue = dataCache.getLong(address);
+                                break;
+                            case "L.S":
+                                loadedValue = dataCache.getSingleFloat(address);
+                                break;
+                            case "L.D":
+                                loadedValue = dataCache.getDoubleFloat(address);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Unsupported load operation: " + operation);
                         }
+
+    
+                        loadBuffer.setLoadedValue(loadedValue);
+                        loadBuffer.setReadyForWriteBack(true);
+                        loadBuffer.setEndExecutionCycle(clockCycle);
+                        entry.setEndExecutionCycle(clockCycle);
+                        loadBuffer.setIsExecuting(false);
+
+                        // Reset first memory access flag
+                        isFirstMemAccess = false;
                     }
                 }
             }
         }
-
+        
         // Process store buffers
         for (StoreBufferEntry storeBuffer : buffers.getStoreBuffers().getBuffer()) {
             if (storeBuffer.isBusy() && storeBuffer.getAddress() != null) {
@@ -466,7 +473,13 @@ public class TomasuloSimulator {
                 if (!storeBuffer.isExecuting() && storeBuffer.getIssueCycle() < clockCycle) {
                     // Start store execution one cycle after issuing
                     storeBuffer.setExecuting(true);
-                    storeBuffer.setExecutionRemainingCycles(storeLatency);
+                    
+                    if(isFirstMemAccess) {
+                        storeBuffer.setExecutionRemainingCycles(loadLatency + cacheMissLatency);
+                    }else {
+                    	storeBuffer.setExecutionRemainingCycles(loadLatency);
+                    }
+                    
                     entry.setStartExecutionCycle(clockCycle);
                 } else if (storeBuffer.isExecuting() && storeBuffer.getValue() != null) {
                     storeBuffer.decrementExecutionRemainingCycles();
@@ -485,11 +498,14 @@ public class TomasuloSimulator {
                         } else if (value instanceof Double) {
                             dataCache.storeDoubleFloat(address, (Double) value);
                         } else {
-                            throw new IllegalArgumentException("Unsupported value type for store: " + value);
+                           dataCache.storeDoubleFloat(address, 0.0);
                         }
                         
+                        storeBuffer.setExecuting(false);
                         storeBuffer.setEndExecutionCycle(clockCycle);
                         entry.setEndExecutionCycle(clockCycle);
+                        entry.setWriteBackCycle(clockCycle);
+                        storeBuffer.clear();
                     }
                 }
             }
@@ -529,11 +545,12 @@ public class TomasuloSimulator {
                 Object loadedValue = loadBuffer.getLoadedValue();
                 updateDependents(tag, loadedValue);
 
-                loadBuffer.clear();
 
                 ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
                 entry.setWriteBackCycle(clockCycle);
                 loadBuffer.setReadyForWriteBack(false);
+                loadBuffer.clear();
+
                 // Only one instruction can write back per cycle
                 break;
             }

@@ -117,18 +117,13 @@ public class Cache {
 	    int offset = address % blockSize; // This works because the word is 4 bytes and the block is 64 bytes
 
 	    // Ensure the block is valid
-	    if (block.isValid()) {
 	        // Combine bytes into the 4-byte word
 	        int word = (block.getData()[offset] & 0xFF)      // First byte (least significant)
 	                   | ((block.getData()[offset + 1] & 0xFF) << 8)  // Second byte
 	                   | ((block.getData()[offset + 2] & 0xFF) << 16) // Third byte
 	                   | ((block.getData()[offset + 3] & 0xFF) << 24); // Fourth byte
 	        return word;
-	    } else {
-	        // Cache miss, handle as needed
-	        System.out.println("Cache miss!");
-	        return -1;  // Return a default error value or throw exception
-	    }
+	   
 	}
 	
 	
@@ -141,7 +136,7 @@ public class Cache {
 	    int offset = address % blockSize;
 
 	    // Ensure the block is valid
-	    if (block.isValid()) {
+	    
 	        // Combine bytes into the 8-byte long
 	        long value = ((long) (block.getData()[offset] & 0xFF)) |
 	                     ((long) (block.getData()[offset + 1] & 0xFF) << 8) |
@@ -153,11 +148,7 @@ public class Cache {
 	                     ((long) (block.getData()[offset + 7] & 0xFF) << 56);
 
 	        return value;
-	    } else {
-	        // Cache miss, handle as needed
-	        System.out.println("Cache miss!");
-	        return 0L;  // Return 0 as the default value for miss (you can also throw an exception if you prefer)
-	    }
+	    
 	}
 	
 	
@@ -169,8 +160,8 @@ public class Cache {
 	    // Get the offset within the block (assuming word size is 4 bytes)
 	    int offset = address % blockSize;
 
-	    // Ensure the block is valid
-	    if (block.isValid()) {
+	   
+	  
 	        // Combine bytes into the 4-byte float (in IEEE 754 format)
 	        int bits = (block.getData()[offset] & 0xFF) |
 	                   ((block.getData()[offset + 1] & 0xFF) << 8) |
@@ -179,11 +170,6 @@ public class Cache {
 
 	        // Convert the combined bits into a float
 	        return Float.intBitsToFloat(bits);
-	    } else {
-	        // Cache miss, handle as needed
-	        System.out.println("Cache miss!");
-	        return Float.NaN;  // Return NaN (Not-a-Number) on miss
-	    }
 	}
 
 	
@@ -196,7 +182,6 @@ public class Cache {
 	    int offset = address % blockSize;
 
 	    // Ensure the block is valid
-	    if (block.isValid()) {
 	        // Combine bytes into the 8-byte double (in IEEE 754 format)
 	        long bits = ((long) (block.getData()[offset] & 0xFF)) |
 	                    ((long) (block.getData()[offset + 1] & 0xFF) << 8) |
@@ -209,11 +194,7 @@ public class Cache {
 
 	        // Convert the combined bits into a double
 	        return Double.longBitsToDouble(bits);
-	    } else {
-	        // Cache miss, handle as needed
-	        System.out.println("Cache miss!");
-	        return Double.NaN;  // Return NaN (Not-a-Number) on miss
-	    }
+	  
 	}
 
 
@@ -363,10 +344,7 @@ public class Cache {
 
         CacheBlock block = cache[blockNumber];
 
-        if (!block.valid || block.tag != tag) {
-            // Cache miss: Load the block from memory
-            loadWord(address);
-        }
+       
 
         // Write the word into the cache
         int offset = getOffset(address);
@@ -388,11 +366,6 @@ public class Cache {
 
         CacheBlock block = cache[blockNumber];
 
-        if (!block.valid || block.tag != tag) {
-            // Cache miss: Load the block from memory
-            loadDoubleWord(address);
-        }
-
         // Write the double word into the cache
         int offset = getOffset(address);
         byte[] valueBytes = longToBytes(value);
@@ -413,10 +386,7 @@ public class Cache {
 
         CacheBlock block = cache[blockNumber];
 
-        if (!block.valid || block.tag != tag) {
-            // Cache miss: Load the block from memory
-            loadSingleFloat(address);
-        }
+      
 
         // Write the single float into the cache
         int offset = getOffset(address);
@@ -438,11 +408,7 @@ public class Cache {
 
         CacheBlock block = cache[blockNumber];
 
-        if (!block.valid || block.tag != tag) {
-            // Cache miss: Load the block from memory
-            loadDoubleFloat(address);
-        }
-
+     
         // Write the double float into the cache
         int offset = getOffset(address);
         byte[] valueBytes = longToBytes(Double.doubleToLongBits(value));

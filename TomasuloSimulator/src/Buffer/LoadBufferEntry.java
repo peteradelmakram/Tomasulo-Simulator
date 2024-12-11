@@ -40,6 +40,19 @@ public class LoadBufferEntry {
         this.stallCycles = stallCycles;
     }
     
+
+    public void clear() {
+        this.busy = false;
+        this.instruction = null;
+        this.address = "";
+        this.issueCycle = -1;
+        this.stallCycles = -1;
+        this.startExecutionCycle = -1;
+        this.endExecutionCycle = -1;
+        this.readyForWriteBack = false;
+        this.isExecuting = false;
+    }
+    
     public Boolean getIsExecuting() {
 		return isExecuting;
 	}
@@ -150,9 +163,6 @@ public class LoadBufferEntry {
         return address;
     }
 
-    public void clear() {
-        this.busy = false;
-    }
 
 	public void decrementExecutionRemainingCycles() {
 		  if (executionRemainingCycles > 0) {

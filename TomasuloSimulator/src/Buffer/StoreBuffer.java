@@ -77,8 +77,9 @@ public class StoreBuffer {
 
     public void updateAfterWriteBack(String tag, Object value) {
     	 for (StoreBufferEntry entry : buffer) {
-             if (entry.isBusy() && entry.getAddress() != null && entry.getAddress().equals(tag)) {
-                 entry.setAddress(value.toString()); // Replace the tag with the actual address
+             if (entry.isBusy() && entry.getAddress() != null && entry.getQ().equals(tag)) {
+                 entry.setValue(value.toString());
+                 entry.setQ(null);// Replace the tag with the actual address
              }
          }		
 	}

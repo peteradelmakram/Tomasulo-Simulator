@@ -131,8 +131,14 @@ public class StoreBufferEntry {
 
     public void clear() {
         this.busy = false;
+        this.instruction = null;
+        this.address = "";
+        this.issueCycle = -1;
+        this.startExecutionCycle = -1;
+        this.endExecutionCycle = -1;
+        this.isExecuting = false;
     }
-
+    
 
 
 	public void decrementExecutionRemainingCycles() {

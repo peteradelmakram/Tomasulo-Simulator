@@ -10,7 +10,7 @@ public class Main {
     	 TomasuloSimulator simulator = new TomasuloSimulator(
     	            16, // Number of integer registers
     	            16, // Number of floating-point registers
-    	            4,  // Cache block size
+    	            16,  // Cache block size
     	            3,  // Add/Subtract reservation station size
     	            2,  // Multiply/Divide reservation station size
     	            2,  // Add latency
