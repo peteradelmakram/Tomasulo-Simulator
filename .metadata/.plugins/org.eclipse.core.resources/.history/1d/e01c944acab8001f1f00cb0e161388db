@@ -531,71 +531,6 @@ public class TomasuloSimulator {
         }
         
 
-        
-        // Process store buffers
-        for (StoreBufferEntry storeBuffer : buffers.getStoreBuffers().getBuffer()) {
-            if (storeBuffer.isBusy() && storeBuffer.getAddress() != null) {
-
-                if (!storeBuffer.isExecuting() && storeBuffer.getAddress() != null && storeBuffer.getIssueCycle() < clockCycle && storeBuffer.getValue() != null) {
-                    // Start store execution one cycle after issuing
-                    storeBuffer.setExecuting(true);
-                    
-                    if(!dataCache.isCacheHit(Integer.parseInt(storeBuffer.getAddress()))) {
-                        storeBuffer.setExecutionRemainingCycles(storeLatency + cacheMissLatency -1);
-                    }else {
-                    	storeBuffer.setExecutionRemainingCycles(storeLatency - 1);
-                    }
-                    ExecutionTableEntry entry = findExecutionTableEntryStart(storeBuffer.getInstruction());
-                    if(entry != null) {
-                        entry.setStartExecutionCycle(clockCycle);
-
-                    }
-                    
-                } else if (storeBuffer.isExecuting() && storeBuffer.getValue() != null) {
-                    storeBuffer.decrementExecutionRemainingCycles();
-
-                    if(storeBuffer.getExecutionRemainingCycles() < cacheMissLatency - storeLatency) {
-                    	dataCache.loadBlockFromMemory(Integer.parseInt(storeBuffer.getAddress()));
-                    }
-                    
-                    String operation = storeBuffer.getInstruction().getOperation();
-
-                    if (storeBuffer.getExecutionRemainingCycles() == 0) {
-                        // Store the value into the cache
-                        int address = Integer.parseInt(storeBuffer.getAddress());
-                        Object value = storeBuffer.getValue();
-                        
-                        switch (operation) {
-                        case "SW":
-                        	dataCache.storeWord(address, Integer.parseInt((String) value));
-                            break;
-                        case "SD":
-                        	dataCache.storeDoubleWord(address, Long.parseLong((String)value));
-                            break;
-                        case "S.S":
-                        	dataCache.storeSingleFloat(address, Float.parseFloat((String) value));
-                            break;
-                        case "S.D":
-                        	dataCache.storeDoubleFloat(address, Double.parseDouble((String) value));
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unsupported load operation: " + operation);
-                    }
-
-                        ExecutionTableEntry entry = findExecutionTableEntryEnd(storeBuffer.getInstruction());
-
-                        storeBuffer.setExecuting(false);
-                        storeBuffer.setEndExecutionCycle(clockCycle);
-                        
-                        if(entry != null) entry.setEndExecutionCycle(clockCycle);
-                        //entry.setWriteBackCycle(clockCycle);
-                        //storeBuffer.clear();
-                    }
-                }
-            }
-        }
-        
-
         // Process load buffers
         for (LoadBufferEntry loadBuffer : buffers.getLoadBuffers().getBuffer()) {
         	
@@ -658,6 +593,69 @@ public class TomasuloSimulator {
 
                         // Reset first memory access flag
                         isFirstMemAccess = false;
+                    }
+                }
+            }
+        }
+        
+        // Process store buffers
+        for (StoreBufferEntry storeBuffer : buffers.getStoreBuffers().getBuffer()) {
+            if (storeBuffer.isBusy() && storeBuffer.getAddress() != null) {
+
+                if (!storeBuffer.isExecuting() && storeBuffer.getAddress() != null && storeBuffer.getIssueCycle() < clockCycle && storeBuffer.getValue() != null) {
+                    // Start store execution one cycle after issuing
+                    storeBuffer.setExecuting(true);
+                    
+                    if(!dataCache.isCacheHit(Integer.parseInt(storeBuffer.getAddress()))) {
+                        storeBuffer.setExecutionRemainingCycles(storeLatency + cacheMissLatency -1);
+                    }else {
+                    	storeBuffer.setExecutionRemainingCycles(storeLatency - 1);
+                    }
+                    ExecutionTableEntry entry = findExecutionTableEntryStart(storeBuffer.getInstruction());
+                    if(entry != null) {
+                        entry.setStartExecutionCycle(clockCycle);
+
+                    }
+                    
+                } else if (storeBuffer.isExecuting() && storeBuffer.getValue() != null) {
+                    storeBuffer.decrementExecutionRemainingCycles();
+
+                    if(storeBuffer.getExecutionRemainingCycles() < cacheMissLatency - storeLatency) {
+                    	dataCache.loadBlockFromMemory(Integer.parseInt(storeBuffer.getAddress()));
+                    }
+                    
+                    String operation = storeBuffer.getInstruction().getOperation();
+
+                    if (storeBuffer.getExecutionRemainingCycles() == 0) {
+                        // Store the value into the cache
+                        int address = Integer.parseInt(storeBuffer.getAddress());
+                        Object value = storeBuffer.getValue();
+                        
+                        switch (operation) {
+                        case "SW":
+                        	dataCache.storeWord(address, (Integer) value);
+                            break;
+                        case "SD":
+                        	dataCache.storeDoubleWord(address, Long.parseLong((String)value));
+                            break;
+                        case "S.S":
+                        	dataCache.storeSingleFloat(address, (Float) value);
+                            break;
+                        case "S.D":
+                        	dataCache.storeDoubleFloat(address, (Double) value);
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Unsupported load operation: " + operation);
+                    }
+
+                        ExecutionTableEntry entry = findExecutionTableEntryEnd(storeBuffer.getInstruction());
+
+                        storeBuffer.setExecuting(false);
+                        storeBuffer.setEndExecutionCycle(clockCycle);
+                        
+                        if(entry != null) entry.setEndExecutionCycle(clockCycle);
+                        //entry.setWriteBackCycle(clockCycle);
+                        //storeBuffer.clear();
                     }
                 }
             }

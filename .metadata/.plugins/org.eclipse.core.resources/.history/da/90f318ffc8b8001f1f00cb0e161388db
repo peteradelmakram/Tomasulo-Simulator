@@ -1,0 +1,3 @@
+DADDI R2, R2, 24
+DADDI R1, R1, 8
+LD 

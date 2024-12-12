@@ -1,6 +1,4 @@
 DADDI R1, R1, 24
 DADDI R2, R2, 20
 SD R1, 0
-SD R2, 8
-LD R4, 0
-LD R4, 8
+LD R2, 0
