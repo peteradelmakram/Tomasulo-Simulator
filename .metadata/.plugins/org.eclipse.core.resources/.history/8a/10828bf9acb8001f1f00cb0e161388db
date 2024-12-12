@@ -1,0 +1,12 @@
+/**
+ * 
+ */
+/**
+ * @author TREND
+ *
+ */
+module TomasuloSimulator {
+	requires java.desktop;
+	requires javafx.graphics;
+	requires javafx.controls;
+}

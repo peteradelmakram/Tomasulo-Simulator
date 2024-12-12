@@ -1,0 +1,4 @@
+DADDI R1, R0, 1
+DSUB R2, R1, R0
+BEQ R1, R0, 3  
+DSUB R1, R1, R1

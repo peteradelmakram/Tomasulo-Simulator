@@ -338,6 +338,17 @@ public class Cache {
         };
     }
 
+    
+    public boolean isCacheHit(int address) {
+        int blockNumber = (address / blockSize) % cache.length; // Calculate block number
+        int tag = address / blockSize;                         // Calculate tag for the address
+
+        CacheBlock block = cache[blockNumber];
+
+        // A cache hit occurs if the block is valid and the tag matches
+        return block.valid;
+    }
+    
     public void storeWord(int address, Integer value) {
         int blockNumber = (address / blockSize) % cache.length;
         int tag = address / blockSize;

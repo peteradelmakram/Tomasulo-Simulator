@@ -1,0 +1,201 @@
+package TomasuloSimulator;
+
+import javafx.application.Application;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import ReservationStations.ReservationStationEntry;
+import Buffer.LoadBufferEntry;
+import Buffer.StoreBufferEntry;
+import ExecutionTable.ExecutionTableEntry;
+import RegisterFile.RegisterFile;
+
+public class TomasuloSimulatorGUI extends Application {
+
+    private TomasuloSimulator simulator;
+    private TableView<ReservationStationEntry> reservationStationTable;
+    private TableView<LoadBufferEntry> loadBuffersTable;
+    private TableView<StoreBufferEntry> storeBuffersTable;
+    private TableView<ExecutionTableEntry> executionTable;
+    private TableView<RegisterFile.Register> registerFileTable;
+
+    @Override
+    public void start(Stage primaryStage) {
+        initializeSetupScreen(primaryStage);
+    }
+
+    private void initializeSetupScreen(Stage stage) {
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(10));
+
+        // Input Fields
+        TextField addLatencyField = new TextField("2");
+        TextField subLatencyField = new TextField("2");
+        TextField mulLatencyField = new TextField("4");
+        TextField divLatencyField = new TextField("5");
+        TextField cacheMissLatencyField = new TextField("5");
+        TextField loadLatencyField = new TextField("2");
+        TextField storeLatencyField = new TextField("2");
+        TextField addSubtractRSSizeField = new TextField("3");
+        TextField multiplyDivideRSSizeField = new TextField("2");
+        TextField loadBufferSizeField = new TextField("3");
+        TextField storeBufferSizeField = new TextField("3");
+        TextField branchLatencyField = new TextField("1");
+
+        GridPane inputGrid = new GridPane();
+        inputGrid.setHgap(10);
+        inputGrid.setVgap(10);
+
+        inputGrid.add(new Label("Add Latency:"), 0, 0);
+        inputGrid.add(addLatencyField, 1, 0);
+        inputGrid.add(new Label("Subtract Latency:"), 0, 1);
+        inputGrid.add(subLatencyField, 1, 1);
+        inputGrid.add(new Label("Multiply Latency:"), 0, 2);
+        inputGrid.add(mulLatencyField, 1, 2);
+        inputGrid.add(new Label("Divide Latency:"), 0, 3);
+        inputGrid.add(divLatencyField, 1, 3);
+        inputGrid.add(new Label("Cache Miss Latency:"), 0, 4);
+        inputGrid.add(cacheMissLatencyField, 1, 4);
+        inputGrid.add(new Label("Load Latency:"), 0, 5);
+        inputGrid.add(loadLatencyField, 1, 5);
+        inputGrid.add(new Label("Store Latency:"), 0, 6);
+        inputGrid.add(storeLatencyField, 1, 6);
+        inputGrid.add(new Label("Add/Subtract RS Size:"), 0, 7);
+        inputGrid.add(addSubtractRSSizeField, 1, 7);
+        inputGrid.add(new Label("Multiply/Divide RS Size:"), 0, 8);
+        inputGrid.add(multiplyDivideRSSizeField, 1, 8);
+        inputGrid.add(new Label("Load Buffer Size:"), 0, 9);
+        inputGrid.add(loadBufferSizeField, 1, 9);
+        inputGrid.add(new Label("Store Buffer Size:"), 0, 10);
+        inputGrid.add(storeBufferSizeField, 1, 10);
+        inputGrid.add(new Label("Branch Latency:"), 0, 11);
+        inputGrid.add(branchLatencyField, 1, 11);
+
+        Button startButton = new Button("Start Simulation");
+        startButton.setOnAction(event -> {
+            simulator = new TomasuloSimulator(
+                    16, // Integer registers
+                    16, // Floating-point registers
+                    16, // Cache block size
+                    Integer.parseInt(addSubtractRSSizeField.getText()),
+                    Integer.parseInt(multiplyDivideRSSizeField.getText()),
+                    Integer.parseInt(addLatencyField.getText()),
+                    Integer.parseInt(subLatencyField.getText()),
+                    Integer.parseInt(mulLatencyField.getText()),
+                    Integer.parseInt(divLatencyField.getText()),
+                    Integer.parseInt(cacheMissLatencyField.getText()),
+                    Integer.parseInt(loadLatencyField.getText()),
+                    Integer.parseInt(storeLatencyField.getText()),
+                    Integer.parseInt(loadBufferSizeField.getText()),
+                    Integer.parseInt(storeBufferSizeField.getText()),
+                    Integer.parseInt(branchLatencyField.getText())
+            );
+            initializeSimulationScreen(stage);
+        });
+
+        root.getChildren().addAll(inputGrid, startButton);
+        stage.setScene(new Scene(root, 400, 600));
+        stage.setTitle("Tomasulo Simulator Setup");
+        stage.show();
+    }
+
+    private void initializeSimulationScreen(Stage stage) {
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(10));
+
+        reservationStationTable = new TableView<>();
+        loadBuffersTable = new TableView<>();
+        storeBuffersTable = new TableView<>();
+        executionTable = new TableView<>();
+        registerFileTable = new TableView<>();
+
+        createReservationStationColumns();
+        createLoadBufferColumns();
+        createStoreBufferColumns();
+        createExecutionTableColumns();
+        createRegisterFileColumns();
+
+        Button nextCycleButton = new Button("Next Cycle");
+        nextCycleButton.setOnAction(event -> {
+            simulator.runSimulator();
+            updateTables();
+        });
+
+        TabPane tabPane = new TabPane();
+
+        Tab rsTab = new Tab("Reservation Stations", reservationStationTable);
+        Tab loadTab = new Tab("Load Buffers", loadBuffersTable);
+        Tab storeTab = new Tab("Store Buffers", storeBuffersTable);
+        Tab execTab = new Tab("Execution Table", executionTable);
+        Tab regTab = new Tab("Register File", registerFileTable);
+
+        tabPane.getTabs().addAll(rsTab, loadTab, storeTab, execTab, regTab);
+
+        root.getChildren().addAll(tabPane, nextCycleButton);
+
+        stage.setScene(new Scene(root, 800, 600));
+        stage.setTitle("Tomasulo Simulator");
+        stage.show();
+
+        updateTables();
+    }
+
+    private void createReservationStationColumns() {
+        TableColumn<ReservationStationEntry, String> tagColumn = new TableColumn<>("Tag");
+        tagColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getTag()));
+
+        TableColumn<ReservationStationEntry, String> opColumn = new TableColumn<>("Operation");
+        opColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getOp()));
+
+        TableColumn<ReservationStationEntry, Boolean> busyColumn = new TableColumn<>("Busy");
+        busyColumn.setCellValueFactory(param -> new SimpleBooleanProperty(param.getValue().isBusy()));
+
+        reservationStationTable.getColumns().addAll(tagColumn, opColumn, busyColumn);
+    }
+
+    private void createLoadBufferColumns() {
+        // Similar to `createReservationStationColumns` but for `LoadBufferEntry`
+    }
+
+    private void createStoreBufferColumns() {
+        // Similar to `createReservationStationColumns` but for `StoreBufferEntry`
+    }
+
+    private void createExecutionTableColumns() {
+        // Similar to `createReservationStationColumns` but for `ExecutionTableEntry`
+    }
+
+    private void createRegisterFileColumns() {
+        TableColumn<RegisterFile.Register, String> tagColumn = new TableColumn<>("Tag");
+        tagColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getTag()));
+
+        TableColumn<RegisterFile.Register, Object> valueColumn = new TableColumn<>("Value");
+        valueColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getValue()));
+
+        registerFileTable.getColumns().addAll(tagColumn, valueColumn);
+    }
+
+    private void updateTables() {
+        reservationStationTable.setItems(FXCollections.observableArrayList(simulator.getReservationStations().getAllStations()));
+        loadBuffersTable.setItems(FXCollections.observableArrayList(simulator.getBuffers().getLoadBuffers().getBuffer()));
+        storeBuffersTable.setItems(FXCollections.observableArrayList(simulator.getBuffers().getStoreBuffers().getBuffer()));
+        executionTable.setItems(FXCollections.observableArrayList(simulator.getExecutionTable()));
+
+        ObservableList<RegisterFile.Register> registerData = FXCollections.observableArrayList();
+        registerData.addAll(simulator.getRegisterFile().getIntegerRegisters().values());
+        registerData.addAll(simulator.getRegisterFile().getFloatingPointRegisters().values());
+        registerFileTable.setItems(registerData);
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}

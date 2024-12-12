@@ -1,0 +1,2 @@
+DADDI R1, R1, 1
+L.D F0, R1

@@ -137,6 +137,7 @@ public class StoreBufferEntry {
         this.startExecutionCycle = -1;
         this.endExecutionCycle = -1;
         this.isExecuting = false;
+        this.Q = null;
     }
     
 

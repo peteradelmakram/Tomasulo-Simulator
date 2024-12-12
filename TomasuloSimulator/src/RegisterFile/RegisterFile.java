@@ -4,7 +4,8 @@ import java.util.Map;
 
 public class RegisterFile {
     // Inner class to represent a register
-    static class Register {
+    public static class Register {
+        private String name; // Name of the register (e.g., R1, F1)
         private String tag;     // Reservation station tag
         private Object value;   // Value of the register (can be Integer or Float)
 
@@ -28,6 +29,15 @@ public class RegisterFile {
         public void setValue(Object value) {
             this.value = value;
         }
+        
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
     }
 
     // Maps for integer and floating-point registers
@@ -44,7 +54,9 @@ public class RegisterFile {
             Register reg = new Register();
             reg.setValue(initInteger);
             reg.setTag("0"); // Setting the initial tag
-            integerRegisters.put("R" + i, reg);
+            String regName = "R" + i;
+            reg.setName(regName);
+            integerRegisters.put(regName, reg);
         }
 
         // Initialize floating-point registers (F0 to F[numFloatingPointRegisters - 1]) with initFloat and tag "0"
@@ -52,7 +64,9 @@ public class RegisterFile {
             Register reg = new Register();
             reg.setValue(initFloat);
             reg.setTag("0"); // Setting the initial tag
-            floatingPointRegisters.put("F" + i, reg);
+            String regName = "F" + i;
+            reg.setName(regName);
+            floatingPointRegisters.put(regName, reg);
         }
     }
 
@@ -157,6 +171,14 @@ public class RegisterFile {
         }
     }
 
+    
+    public  Map<String, Register> getIntegerRegisters(){
+    	return integerRegisters;
+    }
+    
+    public Map<String, Register> getFloatingPointRegisters(){
+    	return floatingPointRegisters;
+    }
     
 
 }

@@ -1,0 +1,168 @@
+package TomasuloSimulator;
+
+import javax.swing.text.TableView;
+
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+public class TomasuloSimulatorGUI extends Application {
+
+    private TomasuloSimulator simulator;
+    private TableView<Object> reservationStationsTable;
+    private TableView<Object> loadBuffersTable;
+    private TableView<Object> storeBuffersTable;
+    private TableView<Object> executionTable;
+    private TableView<Object> registerFileTable;
+
+    @Override
+    public void start(Stage primaryStage) {
+        initializeSetupScreen(primaryStage);
+    }
+
+    private void initializeSetupScreen(Stage stage) {
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(10));
+
+        // Input Fields
+        TextField addLatencyField = new TextField("2");
+        TextField subLatencyField = new TextField("2");
+        TextField mulLatencyField = new TextField("4");
+        TextField divLatencyField = new TextField("5");
+        TextField cacheMissLatencyField = new TextField("5");
+        TextField loadLatencyField = new TextField("2");
+        TextField storeLatencyField = new TextField("2");
+        TextField addSubtractRSSizeField = new TextField("3");
+        TextField multiplyDivideRSSizeField = new TextField("2");
+        TextField loadBufferSizeField = new TextField("3");
+        TextField storeBufferSizeField = new TextField("3");
+        TextField branchLatencyField = new TextField("1");
+
+        GridPane inputGrid = new GridPane();
+        inputGrid.setHgap(10);
+        inputGrid.setVgap(10);
+
+        inputGrid.add(new Label("Add Latency:"), 0, 0);
+        inputGrid.add(addLatencyField, 1, 0);
+        inputGrid.add(new Label("Subtract Latency:"), 0, 1);
+        inputGrid.add(subLatencyField, 1, 1);
+        inputGrid.add(new Label("Multiply Latency:"), 0, 2);
+        inputGrid.add(mulLatencyField, 1, 2);
+        inputGrid.add(new Label("Divide Latency:"), 0, 3);
+        inputGrid.add(divLatencyField, 1, 3);
+        inputGrid.add(new Label("Cache Miss Latency:"), 0, 4);
+        inputGrid.add(cacheMissLatencyField, 1, 4);
+        inputGrid.add(new Label("Load Latency:"), 0, 5);
+        inputGrid.add(loadLatencyField, 1, 5);
+        inputGrid.add(new Label("Store Latency:"), 0, 6);
+        inputGrid.add(storeLatencyField, 1, 6);
+        inputGrid.add(new Label("Add/Subtract RS Size:"), 0, 7);
+        inputGrid.add(addSubtractRSSizeField, 1, 7);
+        inputGrid.add(new Label("Multiply/Divide RS Size:"), 0, 8);
+        inputGrid.add(multiplyDivideRSSizeField, 1, 8);
+        inputGrid.add(new Label("Load Buffer Size:"), 0, 9);
+        inputGrid.add(loadBufferSizeField, 1, 9);
+        inputGrid.add(new Label("Store Buffer Size:"), 0, 10);
+        inputGrid.add(storeBufferSizeField, 1, 10);
+        inputGrid.add(new Label("Branch Latency:"), 0, 11);
+        inputGrid.add(branchLatencyField, 1, 11);
+
+        Button startButton = new Button("Start Simulation");
+        startButton.setOnAction(event -> {
+            simulator = new TomasuloSimulator(
+                    16, // Integer registers
+                    16, // Floating-point registers
+                    16, // Cache block size
+                    Integer.parseInt(addSubtractRSSizeField.getText()),
+                    Integer.parseInt(multiplyDivideRSSizeField.getText()),
+                    Integer.parseInt(addLatencyField.getText()),
+                    Integer.parseInt(subLatencyField.getText()),
+                    Integer.parseInt(mulLatencyField.getText()),
+                    Integer.parseInt(divLatencyField.getText()),
+                    Integer.parseInt(cacheMissLatencyField.getText()),
+                    Integer.parseInt(loadLatencyField.getText()),
+                    Integer.parseInt(storeLatencyField.getText()),
+                    Integer.parseInt(loadBufferSizeField.getText()),
+                    Integer.parseInt(storeBufferSizeField.getText()),
+                    Integer.parseInt(branchLatencyField.getText())
+            );
+            initializeSimulationScreen(stage);
+        });
+
+        root.getChildren().addAll(inputGrid, startButton);
+        stage.setScene(new Scene(root, 400, 600));
+        stage.setTitle("Tomasulo Simulator Setup");
+        stage.show();
+    }
+
+    private void initializeSimulationScreen(Stage stage) {
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(10));
+
+        reservationStationsTable = new TableView<>();
+        loadBuffersTable = new TableView<>();
+        storeBuffersTable = new TableView<>();
+        executionTable = new TableView<>();
+        registerFileTable = new TableView<>();
+
+        Button nextCycleButton = new Button("Next Cycle");
+        nextCycleButton.setOnAction(event -> {
+            simulator.runSimulator();
+            updateTables();
+        });
+
+        TabPane tabPane = new TabPane();
+
+        Tab rsTab = new Tab("Reservation Stations", reservationStationsTable);
+        Tab loadTab = new Tab("Load Buffers", loadBuffersTable);
+        Tab storeTab = new Tab("Store Buffers", storeBuffersTable);
+        Tab execTab = new Tab("Execution Table", executionTable);
+        Tab regTab = new Tab("Register File", registerFileTable);
+
+        tabPane.getTabs().addAll(rsTab, loadTab, storeTab, execTab, regTab);
+
+        root.getChildren().addAll(tabPane, nextCycleButton);
+
+        stage.setScene(new Scene(root, 800, 600));
+        stage.setTitle("Tomasulo Simulator");
+        stage.show();
+
+        updateTables();
+    }
+
+    private void updateTables() {
+        // Update the data in each table based on the simulator's state
+        updateReservationStationsTable();
+        updateLoadBuffersTable();
+        updateStoreBuffersTable();
+        updateExecutionTable();
+        updateRegisterFileTable();
+    }
+
+    private void updateReservationStationsTable() {
+        // Clear and repopulate the reservation stations table
+    }
+
+    private void updateLoadBuffersTable() {
+        // Clear and repopulate the load buffers table
+    }
+
+    private void updateStoreBuffersTable() {
+        // Clear and repopulate the store buffers table
+    }
+
+    private void updateExecutionTable() {
+        // Clear and repopulate the execution table
+    }
+
+    private void updateRegisterFileTable() {
+        // Clear and repopulate the register file table
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}

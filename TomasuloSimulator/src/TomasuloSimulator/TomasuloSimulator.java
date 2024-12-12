@@ -39,14 +39,15 @@ public class TomasuloSimulator {
     private BufferManager buffers;
     private List<ExecutionTableEntry> executionTable;
     private Boolean isFirstMemAccess;
-    
+    private int privateCounter = 0;
+    private int branchLatency;
 
     // Constructor to initialize all components of the simulator
     public TomasuloSimulator(int numIntegerRegisters, int numFloatingPointRegisters, int blockSize, 
                               int addSubtractSize, int multiplyDivideSize, int addLatency, 
-                              int subLatency, int mulLatency, int divLatency, 
+                              int subLatency, int mulLatency, int divLatency,
                               int cacheMissLatency, int loadLatency, int storeLatency,
-                              int loadBufferSize, int storeBufferSize) {
+                              int loadBufferSize, int storeBufferSize, int branchLatency) {
         
     	// Parse the instructions in the file.
         try {
@@ -62,7 +63,7 @@ public class TomasuloSimulator {
 
         // Initialize the RegisterFile, ReservationStations, Memory, and Cache
         this.registerFile = new RegisterFile(numIntegerRegisters, numFloatingPointRegisters, 0, 0.0f);
-        this.reservationStations = new ReservationStationManager(addSubtractSize, multiplyDivideSize);
+        this.reservationStations = new ReservationStationManager(addSubtractSize, multiplyDivideSize, 1);
         this.dataMemory = new Memory(1024); // Initialize memory with 1024 bytes
         this.dataCache = new Cache(1024, blockSize, dataMemory); // Initialize cache with 1024 bytes and block size
 
@@ -81,6 +82,7 @@ public class TomasuloSimulator {
         this.buffers = new BufferManager(loadBufferSize, storeBufferSize, cacheMissLatency);
         this.executionTable = new ArrayList<ExecutionTableEntry>();
         this.isFirstMemAccess = true;
+        this.branchLatency = branchLatency;
     }
 
     public RegisterFile getRegisterFile() {
@@ -157,9 +159,78 @@ public class TomasuloSimulator {
             }
         }
         // If no entry found for the instruction, you can either throw an exception or return null
-        throw new IllegalArgumentException("Execution entry not found for instruction: " + instruction);
+        return null;
+    }
+    
+    
+    
+    public ExecutionTableEntry findExecutionTableEntryStart(Instruction instruction) {
+        for (ExecutionTableEntry entry : executionTable) {
+            if (entry.getInstruction() == instruction && entry.getStartExecutionCycle() < 0) {
+                return entry;
+            }
+        }
+        // If no entry found for the instruction, you can either throw an exception or return null
+        return null;
+    }
+    
+    
+    public ExecutionTableEntry findExecutionTableEntryEnd(Instruction instruction) {
+        for (ExecutionTableEntry entry : executionTable) {
+            if (entry.getInstruction() == instruction && entry.getEndExecutionCycle() < 0) {
+                return entry;
+            }
+        }
+        // If no entry found for the instruction, you can either throw an exception or return null
+        return null;
     }
 
+    public ExecutionTableEntry findExecutionTableEntryWrite(Instruction instruction) {
+        for (ExecutionTableEntry entry : executionTable) {
+            if (entry.getInstruction() == instruction && entry.getWriteBackCycle() < 0) {
+                return entry;
+            }
+        }
+        // If no entry found for the instruction, you can either throw an exception or return null
+        throw new IllegalArgumentException("Execution entry not found for instruction: " + instruction);
+    }
+    
+    private void MapBranchInstructionToStation(ReservationStationEntry station, Instruction instruction) {
+    	String destination = instruction.getSource2();
+    	String source1 = instruction.getDestination();
+    	String source2 = instruction.getSource1();
+    	
+    	String TagJ = registerFile.getRegisterTag(source1);
+    	String TagK = registerFile.getRegisterTag(source2);
+    	Object Vj = registerFile.getRegisterValue(source1);
+    	Object Vk = registerFile.getRegisterValue(source2);
+    	
+    	
+    	if(TagJ.equals("0") && TagK.equals("0")) {
+    		station.setVj(Vj);
+    		station.setVk(Vk);
+    		station.setQj(null);
+    		station.setQk(null);
+    	}else if(!TagJ.equals("0") && TagK.equals("0")) {
+    		station.setQj(TagJ);
+    		station.setVj(null);
+    		station.setVk(Vk);
+    		station.setQk(null);
+    	}else if(TagJ.equals("0") && !TagK.equals("0")) {
+    		station.setQk(TagK);
+    		station.setVk(null);
+    		station.setVj(Vj);
+    		station.setQj(null);
+    	}else {
+    		station.setQj(TagJ);
+    		station.setQk(TagK);
+    		station.setVj(null);
+    		station.setVk(null);
+    	}
+  		station.setIssueCycle(clockCycle);
+  		station.setInstruction(instruction);
+  	}
+    
     public void MapInstructionToStation(ReservationStationEntry Station, Instruction instruction) {
     	Boolean isDirect = false;
         String operand1 = instruction.getSource1();
@@ -256,7 +327,7 @@ public class TomasuloSimulator {
     		String tag = registerFile.getRegisterTag(source);
     		
     		if(tag.equals("0")) {
-    			String address = (String) registerFile.getRegisterValue(source);
+    			String address =  registerFile.getRegisterValue(source) + "";
     			buffer.setAddress(address);
     		}else {
     			buffer.setAddress(tag);
@@ -343,7 +414,16 @@ public class TomasuloSimulator {
                    }else {
                 	   System.out.print("Error.");
                    }
-                   
+            }else if(reservationStations.isBranchOperation(instruction)) {
+            	  if (reservationStations.hasAvailableSlotFor(instruction)) {
+                      String instructionTag = reservationStations.issueInstruction(instruction);
+                      instructionQueue.poll();
+                      ReservationStationEntry station = reservationStations.getStation(instructionTag);
+                      MapBranchInstructionToStation(station, instruction);
+                      ExecutionTableEntry entry = new ExecutionTableEntry(instruction);
+                      entry.setIssueCycle(clockCycle);
+                      executionTable.add(entry);
+                  }
             }else {
             	if(buffers.hasAvailableSlots(instruction)) {
             		String instructionTag = buffers.dispatchInstruction(instruction);
@@ -365,17 +445,14 @@ public class TomasuloSimulator {
             	}else {
             		issued = false;
             	}
-            	
-            	
-
             }
 
             return issued;
         }
         return false;
     }
-    
-    public void executeInstructions() {
+
+	public void executeInstructions() {
         // Process reservation stations
         for (ReservationStationEntry station : reservationStations.getAllStations()) {
         	
@@ -385,9 +462,9 @@ public class TomasuloSimulator {
                 	
                 	// Start execution one cycle after issuing
                     station.setExecuting(true);
-                    station.setExecutionRemainingCycles(getLatency(station.getOp()));
+                    station.setExecutionRemainingCycles(getLatency(station.getOp()) -1);
 
-                    ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
+                    ExecutionTableEntry entry = findExecutionTableEntryStart(station.getInstruction());
                     entry.setStartExecutionCycle(clockCycle);
                     
                 } else if (station.isExecuting()) {
@@ -398,27 +475,92 @@ public class TomasuloSimulator {
                         station.setExecuting(false);
                         station.setReadyForWriteBack(true);
 
-                        ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
+                        ExecutionTableEntry entry = findExecutionTableEntryEnd(station.getInstruction());
                         entry.setEndExecutionCycle(clockCycle);
                         station.setEndExec(clockCycle);
                     }
                 }
             }
         }
+        
+        
+        for (ReservationStationEntry branchStation : reservationStations.getBranchStations()) {
+            if (branchStation.isBusy()) {
+                if (!branchStation.isExecuting() && branchStation.getVj() != null && branchStation.getVk() != null && branchStation.getIssueCycle() < clockCycle && branchStation.getEndExec() < 0) {
+                  
+                	branchStation.setExecuting(true);
+                    branchStation.setExecutionRemainingCycles(branchLatency);
+                    ExecutionTableEntry entry = findExecutionTableEntryStart(branchStation.getInstruction());
+                    entry.setStartExecutionCycle(clockCycle);
+                
+                } else if (branchStation.isExecuting()) {
+                    
+                	branchStation.decrementExecutionRemainingCycles();
+                    
+                	if (branchStation.getExecutionRemainingCycles() == 0) {
+                        branchStation.setExecuting(false);
+                        branchStation.setReadyForWriteBack(true);
+                        ExecutionTableEntry entry = findExecutionTableEntryEnd(branchStation.getInstruction());
+                        entry.setEndExecutionCycle(clockCycle);
+                        //entry.setWriteBackCycle(clockCycle);
+                        
+                        branchStation.setEndExec(clockCycle);
+                        
+
+                        Instruction branchInstruction = branchStation.getInstruction();
+                        int address = Integer.parseInt(branchInstruction.getSource2());
+                        
+
+                        int V1 = (int) branchStation.getVj();
+                        int V2 = (int) branchStation.getVk();
+                     
+
+                        if ((branchInstruction.getOperation().equals("BEQ") && V1 == V2) ||
+                            (branchInstruction.getOperation().equals("BNE") && V1 != V2)) {
+                            privateCounter++;
+                            instructionQueue.clear();
+                            while (instructionMemory.fetchInstruction(address) != null) {
+                                instructionQueue.add(instructionMemory.fetchInstruction(address));
+                                address++;
+                            }
+                        }
+                       // branchStation.clear();
+                	}
+                }
+            }
+        }
+        
 
         // Process load buffers
         for (LoadBufferEntry loadBuffer : buffers.getLoadBuffers().getBuffer()) {
         	
             if (loadBuffer.isBusy() && loadBuffer.getAddress() != null && loadBuffer.getAddress().matches("\\d+")) {
                 int address = Integer.parseInt(loadBuffer.getAddress());
-                ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
 
                 if (!loadBuffer.isExecuting() && loadBuffer.getIssueCycle() < clockCycle && !loadBuffer.isReadyForWriteBack()) {
                     // Start load execution one cycle after issuing
                     loadBuffer.setExecuting(true);
+                    ExecutionTableEntry entry = findExecutionTableEntryStart(loadBuffer.getInstruction());
+
                     
-                    if(isFirstMemAccess) {
+                    if(!dataCache.isCacheHit(address)) {
                         loadBuffer.setExecutionRemainingCycles(loadLatency + cacheMissLatency);
+                        switch (loadBuffer.getInstruction().getOperation()) {
+                        case "LW":
+                            dataCache.loadWord(address);
+                            break;
+                        case "LD":
+                            dataCache.loadDoubleWord(address);
+                            break;
+                        case "L.S":
+                          dataCache.loadSingleFloat(address);
+                            break;
+                        case "L.D":
+                            dataCache.loadDoubleFloat(address);
+                            break;
+                       
+                    }
+                        
                     }else {
                     	loadBuffer.setExecutionRemainingCycles(loadLatency);
                     }
@@ -426,7 +568,7 @@ public class TomasuloSimulator {
                     loadBuffer.setStallCyclesResolved(false);
                     entry.setStartExecutionCycle(clockCycle);
                 }
-                if (loadBuffer.isExecuting()) {
+                if (loadBuffer.isExecuting() && loadBuffer.getExecutionRemainingCycles() > 0) {
                     loadBuffer.decrementExecutionRemainingCycles();
 
                     if (loadBuffer.getExecutionRemainingCycles() == 0) {
@@ -451,7 +593,8 @@ public class TomasuloSimulator {
                                 throw new IllegalArgumentException("Unsupported load operation: " + operation);
                         }
 
-    
+                        ExecutionTableEntry entry = findExecutionTableEntryEnd(loadBuffer.getInstruction());
+
                         loadBuffer.setLoadedValue(loadedValue);
                         loadBuffer.setReadyForWriteBack(true);
                         loadBuffer.setEndExecutionCycle(clockCycle);
@@ -468,19 +611,21 @@ public class TomasuloSimulator {
         // Process store buffers
         for (StoreBufferEntry storeBuffer : buffers.getStoreBuffers().getBuffer()) {
             if (storeBuffer.isBusy() && storeBuffer.getAddress() != null) {
-                ExecutionTableEntry entry = findExecutionTableEntry(storeBuffer.getInstruction());
 
-                if (!storeBuffer.isExecuting() && storeBuffer.getIssueCycle() < clockCycle && storeBuffer.getValue() != null) {
+                if (!storeBuffer.isExecuting() && storeBuffer.getAddress() != null && storeBuffer.getIssueCycle() < clockCycle && storeBuffer.getValue() != null) {
                     // Start store execution one cycle after issuing
                     storeBuffer.setExecuting(true);
                     
-                    if(isFirstMemAccess) {
-                        storeBuffer.setExecutionRemainingCycles(loadLatency + cacheMissLatency);
+                    if(!dataCache.isCacheHit(Integer.parseInt(storeBuffer.getAddress()))) {
+                        storeBuffer.setExecutionRemainingCycles(loadLatency + cacheMissLatency -1);
                     }else {
-                    	storeBuffer.setExecutionRemainingCycles(loadLatency);
+                    	storeBuffer.setExecutionRemainingCycles(loadLatency - 1);
                     }
-                    
-                    entry.setStartExecutionCycle(clockCycle);
+                    ExecutionTableEntry entry = findExecutionTableEntryStart(storeBuffer.getInstruction());
+                    if(entry != null) {
+                        entry.setStartExecutionCycle(clockCycle);
+
+                    }
                     
                 } else if (storeBuffer.isExecuting() && storeBuffer.getValue() != null) {
                     storeBuffer.decrementExecutionRemainingCycles();
@@ -501,12 +646,14 @@ public class TomasuloSimulator {
                         } else {
                            dataCache.storeDoubleFloat(address, 0.0);
                         }
-                        
+                        ExecutionTableEntry entry = findExecutionTableEntryEnd(storeBuffer.getInstruction());
+
                         storeBuffer.setExecuting(false);
                         storeBuffer.setEndExecutionCycle(clockCycle);
-                        entry.setEndExecutionCycle(clockCycle);
-                        entry.setWriteBackCycle(clockCycle);
-                        storeBuffer.clear();
+                        
+                        if(entry != null) entry.setEndExecutionCycle(clockCycle);
+                        //entry.setWriteBackCycle(clockCycle);
+                        //storeBuffer.clear();
                     }
                 }
             }
@@ -528,11 +675,11 @@ public class TomasuloSimulator {
     	        station.clear();
 
     	        // Update the execution table
-    	        ExecutionTableEntry entry = findExecutionTableEntry(station.getInstruction());
+    	        ExecutionTableEntry entry = findExecutionTableEntryWrite(station.getInstruction());
     	        entry.setWriteBackCycle(clockCycle);
 
     	        // Only one instruction can write back per cycle
-    	        break;
+    	        return;
     	    } else if (station.isBusy() && station.isReadyForWriteBack() && station.getWriteBackCycle() == -1) {
     	        // Set the write-back cycle for the instruction
     	        station.setWriteBackCycle(clockCycle);
@@ -547,15 +694,33 @@ public class TomasuloSimulator {
                 updateDependents(tag, loadedValue);
 
 
-                ExecutionTableEntry entry = findExecutionTableEntry(loadBuffer.getInstruction());
+                ExecutionTableEntry entry = findExecutionTableEntryWrite(loadBuffer.getInstruction());
                 entry.setWriteBackCycle(clockCycle);
                 loadBuffer.setReadyForWriteBack(false);
                 loadBuffer.clear();
 
                 // Only one instruction can write back per cycle
-                break;
+                return;
             }
-        } 	
+        }
+        
+        for (StoreBufferEntry storeBuffer : buffers.getStoreBuffers().getBuffer()) {
+            if (storeBuffer.isBusy() && storeBuffer.getAddress() != null && storeBuffer.getEndExecutionCycle() < clockCycle && storeBuffer.getEndExecutionCycle() > 0) {
+                ExecutionTableEntry entry = findExecutionTableEntryWrite(storeBuffer.getInstruction());
+                entry.setWriteBackCycle(clockCycle);
+                storeBuffer.clear();
+               return;
+            }
+        }
+        for (ReservationStationEntry branchStation : reservationStations.getBranchStations()) {
+           if(branchStation.isBusy() && branchStation.getEndExec() < clockCycle && branchStation.getEndExec() > 0) {
+               ExecutionTableEntry entry = findExecutionTableEntryWrite(branchStation.getInstruction());
+               entry.setWriteBackCycle(clockCycle);
+               branchStation.clear();
+               return;
+           }
+        }
+        
     }
     
 
@@ -660,6 +825,33 @@ public class TomasuloSimulator {
             // Optionally, print the current cycle status for debugging
             printStatus();
         }
+    }
+    
+    private boolean simulationFinished = false;
+
+    
+    public void executeSingleCycle() {
+        if (!instructionQueue.isEmpty() || hasPendingWriteBacks()) {
+            clockCycle++;
+            
+            // Step 1: Issue instructions from the queue to the reservation stations
+            issueInstructions();
+
+            // Step 2: Execute instructions in reservation stations and buffers
+            executeInstructions();
+
+            // Step 3: Write back results to the register file and clear reservation stations
+            writeBack();
+
+            // Optionally, print the current cycle status for debugging
+            printStatus();
+        } else {
+            simulationFinished = true; // Mark simulation as finished
+        }
+    }
+    
+    public boolean isSimulationFinished() {
+        return simulationFinished;
     }
 
     // Helper method to check if there are instructions still pending write-back

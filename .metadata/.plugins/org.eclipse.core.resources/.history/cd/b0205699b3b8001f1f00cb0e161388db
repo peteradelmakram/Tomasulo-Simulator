@@ -1,0 +1,210 @@
+package ReservationStations;
+
+import Instruction.Instruction;
+import javafx.beans.property.*;
+
+public class ReservationStationEntry {
+
+    // Observable Properties
+    private final SimpleStringProperty tag = new SimpleStringProperty();
+    private final SimpleStringProperty op = new SimpleStringProperty();
+    private final SimpleObjectProperty<Object> Vj = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<Object> Vk = new SimpleObjectProperty<>();
+    private final SimpleStringProperty Qj = new SimpleStringProperty();
+    private final SimpleStringProperty Qk = new SimpleStringProperty();
+    private final SimpleBooleanProperty busy = new SimpleBooleanProperty();
+
+    // Non-observable fields
+    private Instruction instruction;
+    private int startExec = -1; // Cycle we start executing
+    private int endExec = -1; // Cycle we stop executing
+    private boolean isExecuting = false; // Flag for executing instructions
+    private int executionRemainingCycles = -1; // Remaining cycles for execution
+    private int issueCycle;
+    private boolean readyForWriteBack = false;
+    private int writeBackCycle = -1;
+
+    // Constructor
+    public ReservationStationEntry(String tag, String op) {
+        this.tag.set(tag);
+        this.op.set(op);
+        this.Vj.set(null);
+        this.Vk.set(null);
+        this.Qj.set(null);
+        this.Qk.set(null);
+        this.busy.set(false);
+    }
+
+    // Observable Getters and Setters
+    public String getTag() {
+        return tag.get();
+    }
+
+    public void setTag(String tag) {
+        this.tag.set(tag);
+    }
+
+    public SimpleStringProperty tagProperty() {
+        return tag;
+    }
+
+    public String getOp() {
+        return op.get();
+    }
+
+    public void setOp(String op) {
+        this.op.set(op);
+    }
+
+    public SimpleStringProperty opProperty() {
+        return op;
+    }
+
+    public Object getVj() {
+        return Vj.get();
+    }
+
+    public void setVj(Object Vj) {
+        this.Vj.set(Vj);
+    }
+
+    public SimpleObjectProperty<Object> VjProperty() {
+        return Vj;
+    }
+
+    public Object getVk() {
+        return Vk.get();
+    }
+
+    public void setVk(Object Vk) {
+        this.Vk.set(Vk);
+    }
+
+    public SimpleObjectProperty<Object> VkProperty() {
+        return Vk;
+    }
+
+    public String getQj() {
+        return Qj.get();
+    }
+
+    public void setQj(String Qj) {
+        this.Qj.set(Qj);
+    }
+
+    public SimpleStringProperty QjProperty() {
+        return Qj;
+    }
+
+    public String getQk() {
+        return Qk.get();
+    }
+
+    public void setQk(String Qk) {
+        this.Qk.set(Qk);
+    }
+
+    public SimpleStringProperty QkProperty() {
+        return Qk;
+    }
+
+    public boolean isBusy() {
+        return busy.get();
+    }
+
+    public void setBusy(boolean busy) {
+        this.busy.set(busy);
+    }
+
+    public SimpleBooleanProperty busyProperty() {
+        return busy;
+    }
+
+    // Non-observable Getters and Setters
+    public int getStartExec() {
+        return startExec;
+    }
+
+    public void setStartExec(int startExec) {
+        this.startExec = startExec;
+    }
+
+    public int getEndExec() {
+        return endExec;
+    }
+
+    public void setEndExec(int endExec) {
+        this.endExec = endExec;
+    }
+
+    public boolean isExecuting() {
+        return isExecuting;
+    }
+
+    public void setExecuting(boolean executing) {
+        isExecuting = executing;
+    }
+
+    public int getExecutionRemainingCycles() {
+        return executionRemainingCycles;
+    }
+
+    public void setExecutionRemainingCycles(int executionRemainingCycles) {
+        this.executionRemainingCycles = executionRemainingCycles;
+    }
+
+    public int getIssueCycle() {
+        return issueCycle;
+    }
+
+    public void setIssueCycle(int issueCycle) {
+        this.issueCycle = issueCycle;
+    }
+
+    public boolean isReadyForWriteBack() {
+        return readyForWriteBack;
+    }
+
+    public void setReadyForWriteBack(boolean readyForWriteBack) {
+        this.readyForWriteBack = readyForWriteBack;
+    }
+
+    public int getWriteBackCycle() {
+        return writeBackCycle;
+    }
+
+    public void setWriteBackCycle(int writeBackCycle) {
+        this.writeBackCycle = writeBackCycle;
+    }
+
+    public Instruction getInstruction() {
+        return instruction;
+    }
+
+    public void setInstruction(Instruction instruction) {
+        this.instruction = instruction;
+    }
+
+    // Clear method to reset fields
+    public void clear() {
+        this.busy.set(false);
+        this.op.set(null);
+        this.Vj.set(null);
+        this.Vk.set(null);
+        this.Qj.set(null);
+        this.Qk.set(null);
+        this.isExecuting = false;
+        this.startExec = -1;
+        this.endExec = -1;
+        this.executionRemainingCycles = 0;
+        this.readyForWriteBack = false;
+        this.writeBackCycle = -1;
+    }
+
+    // Decrement execution cycles
+    public void decrementExecutionRemainingCycles() {
+        if (executionRemainingCycles > 0) {
+            executionRemainingCycles--;
+        }
+    }
+}

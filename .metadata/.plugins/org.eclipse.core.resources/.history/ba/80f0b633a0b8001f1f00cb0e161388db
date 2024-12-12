@@ -1,0 +1,3 @@
+L.D F0, R0
+DSUBI R1, R1, 8
+BNE R1, R2, 0

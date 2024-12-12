@@ -1,0 +1,10 @@
+/**
+ * 
+ */
+/**
+ * @author TREND
+ *
+ */
+module TomasuloSimulator {
+	requires java.desktop;
+}
