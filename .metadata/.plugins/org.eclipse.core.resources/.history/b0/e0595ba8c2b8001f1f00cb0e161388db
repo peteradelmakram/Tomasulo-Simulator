@@ -110,7 +110,7 @@ public class TomasuloSimulatorGUI extends Application {
 
         root.getChildren().addAll(inputGrid, startButton);
         stage.setScene(new Scene(root, 400, 600));
-        stage.setTitle("Tomasulo Simulator");
+        stage.setTitle("Tomasulo Simulator Setup");
         stage.show();
     }
 
