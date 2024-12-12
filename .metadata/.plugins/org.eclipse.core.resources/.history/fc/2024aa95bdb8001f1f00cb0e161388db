@@ -4,7 +4,7 @@ import DataMemory.Memory;
 
 public class Cache {
 	
-    public static class CacheBlock {
+    static class CacheBlock {
         boolean valid;
         int tag;
         byte[] data;
@@ -126,17 +126,6 @@ public class Cache {
 	   
 	}
 	
-	public void loadBlockFromMemory(int address) {
-		  int blockNumber = getBlockNumber(address);
-		   CacheBlock block = cache[blockNumber];
-	    for (int i = 0; i < blockSize; i++) {
-	        block.data[i] = (byte) memory.readByte(address + i);
-	    }
-
-	    block.valid = true;
-	    block.tag = address / blockSize;
-	}
-
 	
 	public long getLong(int address) {
 	    // Get the cache block number

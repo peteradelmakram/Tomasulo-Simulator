@@ -555,8 +555,8 @@ public class TomasuloSimulator {
                 if (loadBuffer.isExecuting() && loadBuffer.getExecutionRemainingCycles() > 0) {
                     loadBuffer.decrementExecutionRemainingCycles();
                     
-                    if(loadBuffer.getExecutionRemainingCycles() < cacheMissLatency - loadLatency) {
-                    	dataCache.loadBlockFromMemory(address);
+                    if(loadBuffer.getExecutionRemainingCycles() < cacheMissLatency) {
+                    	
                     }
                     
                     
@@ -606,9 +606,9 @@ public class TomasuloSimulator {
                     storeBuffer.setExecuting(true);
                     
                     if(!dataCache.isCacheHit(Integer.parseInt(storeBuffer.getAddress()))) {
-                        storeBuffer.setExecutionRemainingCycles(storeLatency + cacheMissLatency -1);
+                        storeBuffer.setExecutionRemainingCycles(loadLatency + cacheMissLatency -1);
                     }else {
-                    	storeBuffer.setExecutionRemainingCycles(storeLatency - 1);
+                    	storeBuffer.setExecutionRemainingCycles(loadLatency - 1);
                     }
                     ExecutionTableEntry entry = findExecutionTableEntryStart(storeBuffer.getInstruction());
                     if(entry != null) {
@@ -619,11 +619,6 @@ public class TomasuloSimulator {
                 } else if (storeBuffer.isExecuting() && storeBuffer.getValue() != null) {
                     storeBuffer.decrementExecutionRemainingCycles();
 
-                    if(storeBuffer.getExecutionRemainingCycles() < cacheMissLatency - storeLatency) {
-                    	dataCache.loadBlockFromMemory(Integer.parseInt(storeBuffer.getAddress()));
-                    }
-                    
-                    
                     if (storeBuffer.getExecutionRemainingCycles() == 0) {
                         // Store the value into the cache
                         int address = Integer.parseInt(storeBuffer.getAddress());
@@ -860,14 +855,6 @@ public class TomasuloSimulator {
 
 	public List<ExecutionTableEntry> getExecutionTable() {
 		return executionTable;
-	}
-	
-	public Cache getDataCache() {
-		return dataCache;
-	}
-	
-	public int getCycle() {
-		return clockCycle;
 	}
 }
 

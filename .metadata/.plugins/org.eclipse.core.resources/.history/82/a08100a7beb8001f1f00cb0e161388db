@@ -4,7 +4,7 @@ import DataMemory.Memory;
 
 public class Cache {
 	
-    public static class CacheBlock {
+    static class CacheBlock {
         boolean valid;
         int tag;
         byte[] data;

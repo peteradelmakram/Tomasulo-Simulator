@@ -143,16 +143,12 @@ public class TomasuloSimulatorGUI extends Application {
         instructionQueueTable = createInstructionQueueTable();
         dataCacheTable = createDataCacheTable();
 
-        Label clockCycleLabel = new Label("Clock Cycle: 0");
-
+        
         // Next cycle button
         Button nextCycleButton = new Button("Next Cycle");
         nextCycleButton.setOnAction(event -> {
             simulator.executeSingleCycle();
             updateTables();
-            
-            clockCycleLabel.setText("Clock Cycle : " + simulator.getCycle());
-            
         });
 
         // Tabs for each table
@@ -169,7 +165,7 @@ public class TomasuloSimulatorGUI extends Application {
         tabPane.getTabs().addAll(rsTab, loadTab, storeTab, execTab, regTab, instrTab, cacheTab);
 
         // Add all components to the root layout
-        root.getChildren().addAll(tabPane,clockCycleLabel, nextCycleButton);
+        root.getChildren().addAll(tabPane, nextCycleButton);
 
         // Set the scene
         stage.setScene(new Scene(root, 800, 800)); // Increase height to accommodate larger tables

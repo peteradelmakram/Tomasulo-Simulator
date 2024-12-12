@@ -12,7 +12,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import ReservationStations.ReservationStationEntry;
 
-import java.util.Arrays;
 import java.util.function.Function;
 
 import Buffer.LoadBufferEntry;
@@ -91,7 +90,7 @@ public class TomasuloSimulatorGUI extends Application {
             simulator = new TomasuloSimulator(
                     16, // Integer registers
                     16, // Floating-point registers
-                    8, // Cache block size
+                    16, // Cache block size
                     Integer.parseInt(addSubtractRSSizeField.getText()),
                     Integer.parseInt(multiplyDivideRSSizeField.getText()),
                     Integer.parseInt(addLatencyField.getText()),
@@ -143,16 +142,12 @@ public class TomasuloSimulatorGUI extends Application {
         instructionQueueTable = createInstructionQueueTable();
         dataCacheTable = createDataCacheTable();
 
-        Label clockCycleLabel = new Label("Clock Cycle: 0");
-
+        
         // Next cycle button
         Button nextCycleButton = new Button("Next Cycle");
         nextCycleButton.setOnAction(event -> {
             simulator.executeSingleCycle();
             updateTables();
-            
-            clockCycleLabel.setText("Clock Cycle : " + simulator.getCycle());
-            
         });
 
         // Tabs for each table
@@ -166,10 +161,10 @@ public class TomasuloSimulatorGUI extends Application {
         Tab instrTab = new Tab("Instruction Queue", instructionQueueTable);
         Tab cacheTab = new Tab("Data Cache", dataCacheTable);
         
-        tabPane.getTabs().addAll(rsTab, loadTab, storeTab, execTab, regTab, instrTab, cacheTab);
+        tabPane.getTabs().addAll(rsTab, loadTab, storeTab, execTab, regTab);
 
         // Add all components to the root layout
-        root.getChildren().addAll(tabPane,clockCycleLabel, nextCycleButton);
+        root.getChildren().addAll(tabPane, nextCycleButton);
 
         // Set the scene
         stage.setScene(new Scene(root, 800, 800)); // Increase height to accommodate larger tables
@@ -179,34 +174,7 @@ public class TomasuloSimulatorGUI extends Application {
         updateTables();
     }
 
-    private TableView<Instruction> createInstructionQueueTable() {
-        TableView<Instruction> table = new TableView<>();
-        table.getColumns().addAll(
-                createColumn("Operation", Instruction::getOperation),
-                createColumn("Source 1", Instruction::getSource1),
-                createColumn("Source 2", Instruction::getSource2),
-                createColumn("Destination", Instruction::getDestination)
-        );
-        return table;
-    }
-    
-    private TableView<Cache.CacheBlock> createDataCacheTable() {
-        TableView<Cache.CacheBlock> table = new TableView<>();
 
-        // Create columns for the table
-        TableColumn<Cache.CacheBlock, Boolean> validColumn = createColumn("Valid", Cache.CacheBlock::isValid);
-        TableColumn<Cache.CacheBlock, Integer> tagColumn = createColumn("Tag", Cache.CacheBlock::getTag);
-        TableColumn<Cache.CacheBlock, String> dataColumn = createColumn("Data", block -> Arrays.toString(block.getData()));
-
-        // Add columns to the table
-        table.getColumns().add(validColumn);
-        table.getColumns().add(tagColumn);
-        table.getColumns().add(dataColumn);
-
-        return table;
-    }
-
-    
     private TableView<ReservationStationEntry> createReservationStationTable() {
         TableView<ReservationStationEntry> table = new TableView<>();
         table.getColumns().addAll(
@@ -313,18 +281,6 @@ public class TomasuloSimulatorGUI extends Application {
         registerData.addAll(simulator.getRegisterFile().getFloatingPointRegisters().values());
         registerFileTable.setItems(registerData);
         registerFileTable.refresh(); // Force a refresh
-        
-        // Update instruction queue
-        ObservableList<Instruction> instructionQueueData = FXCollections.observableArrayList(simulator.getInstructionQueue());
-        instructionQueueTable.setItems(instructionQueueData);
-        instructionQueueTable.refresh();
-
-        // Update data cache
-        ObservableList<Cache.CacheBlock> cacheData = FXCollections.observableArrayList(simulator.getDataCache().getCache());
-        dataCacheTable.setItems(cacheData);
-        dataCacheTable.refresh();
-        
-        
     }
 
     public static void main(String[] args) {

@@ -555,7 +555,7 @@ public class TomasuloSimulator {
                 if (loadBuffer.isExecuting() && loadBuffer.getExecutionRemainingCycles() > 0) {
                     loadBuffer.decrementExecutionRemainingCycles();
                     
-                    if(loadBuffer.getExecutionRemainingCycles() < cacheMissLatency - loadLatency) {
+                    if(loadBuffer.getExecutionRemainingCycles() < cacheMissLatency + 1) {
                     	dataCache.loadBlockFromMemory(address);
                     }
                     
@@ -606,9 +606,9 @@ public class TomasuloSimulator {
                     storeBuffer.setExecuting(true);
                     
                     if(!dataCache.isCacheHit(Integer.parseInt(storeBuffer.getAddress()))) {
-                        storeBuffer.setExecutionRemainingCycles(storeLatency + cacheMissLatency -1);
+                        storeBuffer.setExecutionRemainingCycles(loadLatency + cacheMissLatency -1);
                     }else {
-                    	storeBuffer.setExecutionRemainingCycles(storeLatency - 1);
+                    	storeBuffer.setExecutionRemainingCycles(loadLatency - 1);
                     }
                     ExecutionTableEntry entry = findExecutionTableEntryStart(storeBuffer.getInstruction());
                     if(entry != null) {
@@ -619,7 +619,7 @@ public class TomasuloSimulator {
                 } else if (storeBuffer.isExecuting() && storeBuffer.getValue() != null) {
                     storeBuffer.decrementExecutionRemainingCycles();
 
-                    if(storeBuffer.getExecutionRemainingCycles() < cacheMissLatency - storeLatency) {
+                    if(storeBuffer.getExecutionRemainingCycles() < cacheMissLatency) {
                     	dataCache.loadBlockFromMemory(Integer.parseInt(storeBuffer.getAddress()));
                     }
                     
